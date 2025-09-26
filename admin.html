@@ -151,11 +151,17 @@
                 </div>
                 
                 <!-- 연동 기능 버튼들 -->
-                <div id="integration-features" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div id="integration-features" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <button onclick="syncWithGoogleSheets()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
                         <i class="fas fa-cloud-upload-alt text-lg mb-1 block"></i>
                         <div class="font-medium">데이터 동기화</div>
-                        <div class="text-xs opacity-80">오프라인 데이터를 구글로 전송</div>
+                        <div class="text-xs opacity-80">오프라인 → 구글 전송</div>
+                    </button>
+                    
+                    <button onclick="importFromGoogleSheets()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
+                        <i class="fas fa-cloud-download-alt text-lg mb-1 block"></i>
+                        <div class="font-medium">데이터 가져오기</div>
+                        <div class="text-xs opacity-80">구글 → 웹시스템 가져오기</div>
                     </button>
                     
                     <button onclick="triggerAutomation()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
@@ -817,6 +823,160 @@
                 button.innerHTML = originalText;
                 button.disabled = false;
             }
+        }
+
+        async function importFromGoogleSheets() {
+            if (typeof window.attendanceAPI === 'undefined') {
+                alert('⚠️ API가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+
+            if (!window.attendanceAPI.isOnlineMode || !window.attendanceAPI.webAppUrl) {
+                alert('⚠️ Google Apps Script가 연결되지 않았습니다.\n\n먼저 "URL 설정"으로 구글 시트와 연결해주세요.');
+                return;
+            }
+
+            const confirmImport = confirm('📥 구글 스프레드시트에서 전체 출결 데이터를 가져오시겠습니까?\n\n• 중복된 데이터는 자동으로 제외됩니다\n• 기존 로컬 데이터는 보존됩니다\n• 시간이 다소 걸릴 수 있습니다');
+            
+            if (!confirmImport) return;
+
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>데이터 가져오는 중...';
+            button.disabled = true;
+
+            try {
+                // Google Sheets에서 전체 데이터 조회
+                const response = await fetch(`${window.attendanceAPI.webAppUrl}?action=getAllRecords&timestamp=${Date.now()}`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.status !== 'success') {
+                    throw new Error(result.message || '데이터 조회에 실패했습니다.');
+                }
+
+                const googleData = result.data || [];
+                console.log(`📊 구글 시트에서 ${googleData.length}건의 데이터를 조회했습니다.`);
+
+                if (googleData.length === 0) {
+                    alert('📭 구글 스프레드시트에 가져올 데이터가 없습니다.');
+                    return;
+                }
+
+                // 기존 로컬 데이터 가져오기
+                const existingData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                const existingKeys = new Set();
+
+                // 기존 데이터의 고유 키 생성
+                existingData.forEach(record => {
+                    const key = generateLocalUniqueKey(record);
+                    existingKeys.add(key);
+                });
+
+                // 중복 제거하며 새 데이터 추가
+                let importedCount = 0;
+                let skippedCount = 0;
+
+                googleData.forEach(googleRecord => {
+                    const localRecord = convertGoogleToLocalFormat(googleRecord);
+                    const key = generateLocalUniqueKey(localRecord);
+
+                    if (!existingKeys.has(key)) {
+                        existingData.push(localRecord);
+                        existingKeys.add(key);
+                        importedCount++;
+                    } else {
+                        skippedCount++;
+                    }
+                });
+
+                // 날짜순 정렬
+                existingData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                // 로컬스토리지에 저장
+                localStorage.setItem('attendanceData', JSON.stringify(existingData));
+
+                // 통계 업데이트
+                updateStats();
+                showAll();
+
+                // 결과 알림
+                let message = `✅ 구글 스프레드시트 데이터 가져오기 완료!\n\n`;
+                message += `📊 총 조회: ${googleData.length}건\n`;
+                message += `➕ 새로 추가: ${importedCount}건\n`;
+                message += `⏭️ 중복 제외: ${skippedCount}건\n\n`;
+                message += `📱 현재 웹시스템 총 데이터: ${existingData.length}건`;
+
+                alert(message);
+
+                console.log(`🎉 데이터 가져오기 완료: ${importedCount}건 추가, ${skippedCount}건 중복 제외`);
+
+            } catch (error) {
+                console.error('구글 시트 데이터 가져오기 실패:', error);
+                
+                let errorMessage = '❌ 구글 스프레드시트에서 데이터를 가져오는데 실패했습니다.\n\n';
+                
+                if (error.message.includes('HTTP')) {
+                    errorMessage += '🔗 연결 문제일 수 있습니다. 잠시 후 다시 시도해보세요.';
+                } else {
+                    errorMessage += `오류 내용: ${error.message}`;
+                }
+                
+                alert(errorMessage);
+                
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // 구글 데이터를 로컬 형식으로 변환
+        function convertGoogleToLocalFormat(googleRecord) {
+            const timestamp = new Date(googleRecord.date);
+            
+            return {
+                id: generateId(),
+                studentId: googleRecord.studentId,
+                studentName: googleRecord.studentName,
+                status: googleRecord.checkIn ? '입실' : '퇴실', // 임시로 입실로 처리, 실제로는 더 정교한 로직 필요
+                timestamp: timestamp.toISOString(),
+                submittedAt: new Date().toISOString(),
+                source: 'imported_from_google_sheets',
+                googleData: {
+                    checkIn: googleRecord.checkIn,
+                    checkOut: googleRecord.checkOut,
+                    studyTime: googleRecord.studyTime
+                }
+            };
+        }
+
+        // 로컬 데이터용 고유 키 생성
+        function generateLocalUniqueKey(record) {
+            const date = new Date(record.timestamp).toISOString().split('T')[0];
+            const studentId = record.studentId;
+            
+            // Google 데이터인 경우 특별 처리
+            if (record.googleData) {
+                const checkIn = String(record.googleData.checkIn || '').replace(/'/g, '').trim();
+                const checkOut = String(record.googleData.checkOut || '').replace(/'/g, '').trim();
+                return `${date}_${studentId}_${checkIn}_${checkOut}`;
+            }
+            
+            // 일반 로컬 데이터인 경우
+            const time = new Date(record.timestamp).toTimeString().split(' ')[0];
+            return `${date}_${studentId}_${record.status}_${time}`;
+        }
+
+        // ID 생성 헬퍼 함수
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
         }
 
         function openSpreadsheet() {
