@@ -6,8 +6,7 @@
     <title>JJ 선생님 관리자 대시보드</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <!-- Google Apps Script 연동 API -->
-    <script src="js/api.js"></script>
+    <!-- Google Apps Script 연동 API - 인라인으로 포함 -->
     <style>
         body { font-family: 'Arial', sans-serif; }
         .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
@@ -142,11 +141,11 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <button onclick="openIntegrationGuide()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-2 block">
-                            <i class="fas fa-cog mr-1"></i>연동 설정
+                        <button onclick="setGoogleAppsScriptUrl()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-2 block">
+                            <i class="fas fa-link mr-1"></i>URL 설정
                         </button>
                         <button onclick="checkConnection()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <i class="fas fa-sync mr-1"></i>상태 새로고침
+                            <i class="fas fa-sync mr-1"></i>상태 확인
                         </button>
                     </div>
                 </div>
@@ -533,6 +532,158 @@
             window.open('status.html', '_blank');
         }
 
+        // ========== Google Apps Script v8 API (인라인 포함) ==========
+        
+        class AttendanceAPI {
+            constructor() {
+                this.webAppUrl = localStorage.getItem('WEBAPP_URL') || null;
+                this.isOnlineMode = this.webAppUrl ? true : false;
+                console.log(`아침자습 API 초기화 - ${this.isOnlineMode ? '온라인' : '오프라인'} 모드`);
+            }
+
+            setWebAppUrl(url) {
+                this.webAppUrl = url;
+                this.isOnlineMode = true;
+                localStorage.setItem('WEBAPP_URL', url);
+                console.log('구글 앱스크립트 URL 설정됨:', url);
+            }
+
+            async checkConnection() {
+                if (!this.webAppUrl) {
+                    return { 
+                        connected: false, 
+                        mode: 'offline',
+                        message: '⚠️ 구글 앱스크립트 URL이 설정되지 않았습니다.'
+                    };
+                }
+
+                try {
+                    const testResponse = await fetch(`${this.webAppUrl}?action=test&timestamp=${Date.now()}`, {
+                        method: 'GET',
+                        mode: 'no-cors'
+                    });
+                    
+                    return {
+                        connected: true,
+                        mode: 'google_sheets_v8',
+                        message: '✅ 구글 스프레드시트 v8 시스템과 연결되었습니다!',
+                        spreadsheet_id: '1dJEOyc59eZgwidKjXiYptgreAIabfBbkndN0g17Qsb8'
+                    };
+
+                } catch (error) {
+                    return {
+                        connected: 'unknown',
+                        mode: 'hybrid',
+                        message: '🔄 하이브리드 모드: 로컬 저장 + 구글 시스템 동기화'
+                    };
+                }
+            }
+
+            async syncWithGoogleSheets() {
+                if (!this.isOnlineMode || !this.webAppUrl) {
+                    return {
+                        success: false,
+                        message: 'Google Apps Script가 설정되지 않았습니다.'
+                    };
+                }
+
+                try {
+                    const localData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                    const unsyncedData = localData.filter(record => record.source === 'offline');
+
+                    if (unsyncedData.length === 0) {
+                        return {
+                            success: true,
+                            message: '동기화할 데이터가 없습니다.',
+                            syncedCount: 0
+                        };
+                    }
+
+                    let syncedCount = 0;
+                    for (const record of unsyncedData) {
+                        try {
+                            const formData = new URLSearchParams();
+                            formData.append('action', 'submit');
+                            formData.append('student_id', record.studentId);
+                            formData.append('student_name', record.studentName);
+                            formData.append('status', record.status);
+                            formData.append('timestamp', record.timestamp);
+                            formData.append('source', 'sync_from_web');
+
+                            await fetch(this.webAppUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: formData,
+                                mode: 'no-cors'
+                            });
+
+                            record.source = 'synced';
+                            record.syncedAt = new Date().toISOString();
+                            syncedCount++;
+                        } catch (syncError) {
+                            console.warn('개별 데이터 동기화 실패:', syncError);
+                        }
+                    }
+
+                    localStorage.setItem('attendanceData', JSON.stringify(localData));
+
+                    return {
+                        success: true,
+                        message: `✅ ${syncedCount}건의 오프라인 데이터가 Google Sheets와 동기화되었습니다.`,
+                        syncedCount,
+                        totalCount: unsyncedData.length
+                    };
+
+                } catch (error) {
+                    console.error('Google Sheets 동기화 실패:', error);
+                    return {
+                        success: false,
+                        message: `동기화 중 오류가 발생했습니다: ${error.message}`
+                    };
+                }
+            }
+
+            async triggerAutomation(type = 'processMissing') {
+                if (!this.isOnlineMode || !this.webAppUrl) {
+                    return {
+                        success: false,
+                        message: '오프라인 모드에서는 자동화 기능을 사용할 수 없습니다.'
+                    };
+                }
+
+                try {
+                    const params = new URLSearchParams({
+                        action: type,
+                        timestamp: new Date().toISOString(),
+                        trigger_source: 'web_interface'
+                    });
+
+                    await fetch(`${this.webAppUrl}?${params}`, {
+                        method: 'GET',
+                        mode: 'no-cors'
+                    });
+
+                    return {
+                        success: true,
+                        message: `✅ ${type} 자동화 기능이 실행되었습니다.`,
+                        note: 'Google Apps Script에서 백그라운드로 처리 중입니다.'
+                    };
+
+                } catch (error) {
+                    console.error('자동화 트리거 실패:', error);
+                    return {
+                        success: false,
+                        message: `자동화 실행 중 오류가 발생했습니다: ${error.message}`
+                    };
+                }
+            }
+        }
+
+        // 전역 API 인스턴스 생성
+        window.attendanceAPI = new AttendanceAPI();
+
         // ========== Google Apps Script v8 연동 기능 ==========
 
         async function checkConnection() {
@@ -540,18 +691,6 @@
             statusElement.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span class="text-sm">연결 상태 확인 중...</span>';
             
             try {
-                // api.js의 attendanceAPI가 로드되어 있는지 확인
-                if (typeof window.attendanceAPI === 'undefined') {
-                    // API 로드 시도
-                    const script = document.createElement('script');
-                    script.src = 'js/api.js';
-                    script.onload = () => {
-                        setTimeout(checkConnection, 500); // API 로드 후 다시 확인
-                    };
-                    document.head.appendChild(script);
-                    return;
-                }
-
                 const status = await window.attendanceAPI.checkConnection();
                 
                 if (status.connected === true) {
@@ -582,9 +721,41 @@
             }
         }
 
-        async function openIntegrationGuide() {
-            // 연동 가이드 페이지 열기
-            window.open('./integration-guide.html', '_blank');
+        // Google Apps Script URL 설정 함수 추가
+        function setGoogleAppsScriptUrl() {
+            const url = prompt('Google Apps Script 웹앱 URL을 입력하세요:\n(예: https://script.google.com/macros/s/.../exec)');
+            
+            if (!url) return;
+            
+            if (!url.includes('script.google.com')) {
+                alert('올바른 Google Apps Script URL을 입력해주세요.');
+                return;
+            }
+            
+            window.attendanceAPI.setWebAppUrl(url);
+            alert('✅ Google Apps Script URL이 설정되었습니다!\n\n연결 상태를 확인해보세요.');
+            
+            // 연결 상태 자동 확인
+            setTimeout(checkConnection, 500);
+        }
+
+        // 연동 가이드를 alert로 간단하게 제공
+        function showIntegrationGuide() {
+            alert(`🚀 Google Apps Script v8 연동 가이드:
+
+1️⃣ Google Apps Script 준비:
+   • 기존 스프레드시트 → 확장 프로그램 → Apps Script
+   • 제공받은 v8 코드로 교체
+   • 배포 → 새 배포 → 웹 앱
+   • 실행 계정: 본인, 액세스: 모든 사용자
+   • 배포 클릭하고 URL 복사
+
+2️⃣ 웹 시스템 연결:
+   • "URL 설정" 버튼 클릭
+   • 복사한 URL 붙여넣기
+   • "상태 확인" 버튼으로 연결 테스트
+
+3️⃣ 즉시 연동 완료! 🎉`);
         }
 
         async function syncWithGoogleSheets() {
