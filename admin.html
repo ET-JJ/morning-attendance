@@ -22,7 +22,7 @@
                 </div>
                 <h1 class="text-2xl font-bold text-gray-800">JJ 선생님 전용</h1>
                 <p class="text-gray-600 mb-2">아침자습 관리 시스템</p>
-                <p class="text-sm text-green-600">✅ 완전한 삭제 기능 포함</p>
+                <p class="text-sm text-green-600">완전한 삭제 기능 포함</p>
             </div>
             
             <div class="space-y-4">
@@ -45,13 +45,13 @@
                         <i class="fas fa-lock mr-1"></i>
                         JJ 선생님 전용 - 승인된 계정만 접근 가능
                     </div>
-                    <div class="text-xs text-blue-600">🔥 2024.09.26 보안 강화 버전</div>
+                    <div class="text-xs text-blue-600">2024.09.26 보안 강화 버전</div>
                 </div>
             </div>
 
             <div class="mt-6 text-center">
                 <a href="index.html" class="text-sm text-indigo-600 hover:text-indigo-800">
-                    ← 출결 입력 페이지로 돌아가기
+                    출결 입력 페이지로 돌아가기
                 </a>
             </div>
         </div>
@@ -196,7 +196,7 @@
                 updateTime();
                 console.log('로그인 성공 - JJ 선생님 관리자 시스템');
             } else {
-                alert('올바르지 않은 비밀번호입니다. 승인된 관리자만 접근 가능합니다.');
+                alert('올바르지 않은 비밀번호입니다.');
                 document.getElementById('password').value = '';
                 document.getElementById('password').focus();
             }
@@ -248,45 +248,31 @@
             const data = getData();
             const container = document.getElementById('data-list');
             
-            document.getElementById('record-count').textContent = `총 ${data.length}개 기록`;
+            document.getElementById('record-count').textContent = '총 ' + data.length + '개 기록';
             
             if (data.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 text-gray-500">
-                        <i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i>
-                        <p class="font-medium">등록된 데이터가 없습니다</p>
-                        <p class="text-sm mt-1">학생들이 출결을 입력하면 여기에 표시됩니다</p>
-                        <div class="mt-4">
-                            <a href="index.html" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 text-sm">
-                                <i class="fas fa-plus mr-1"></i>출결 입력 페이지로 이동
-                            </a>
-                        </div>
-                    </div>
-                `;
+                container.innerHTML = '<div class="text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i><p class="font-medium">등록된 데이터가 없습니다</p><p class="text-sm mt-1">학생들이 출결을 입력하면 여기에 표시됩니다</p></div>';
                 return;
             }
 
             const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
-            container.innerHTML = sortedData.map((record, index) => `
-                <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center">
-                            <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
-                        </div>
-                        <div>
-                            <div class="font-medium">${record.studentName} (${record.studentId})</div>
-                            <div class="text-sm text-gray-500">
-                                ${record.status} • ${new Date(record.timestamp).toLocaleString('ko-KR')}
-                                ${record.processed ? ' • <span class="text-blue-500">자동처리</span>' : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="deleteRecord(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `).join('');
+            container.innerHTML = sortedData.map((record, index) => 
+                '<div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">' +
+                '<div class="flex items-center space-x-3">' +
+                '<div class="w-8 h-8 ' + (record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600') + ' rounded-full flex items-center justify-center">' +
+                '<i class="fas ' + (record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt') + ' text-xs"></i>' +
+                '</div>' +
+                '<div>' +
+                '<div class="font-medium">' + record.studentName + ' (' + record.studentId + ')</div>' +
+                '<div class="text-sm text-gray-500">' + record.status + ' • ' + new Date(record.timestamp).toLocaleString('ko-KR') + '</div>' +
+                '</div>' +
+                '</div>' +
+                '<button onclick="deleteRecord(' + index + ')" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">' +
+                '<i class="fas fa-trash"></i>' +
+                '</button>' +
+                '</div>'
+            ).join('');
         }
 
         function showToday() {
@@ -295,16 +281,10 @@
             const allData = getData();
             const container = document.getElementById('data-list');
             
-            document.getElementById('record-count').textContent = `오늘 ${todayData.length}개 기록`;
+            document.getElementById('record-count').textContent = '오늘 ' + todayData.length + '개 기록';
             
             if (todayData.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 text-gray-500">
-                        <i class="fas fa-calendar-day text-4xl mb-3 text-gray-300"></i>
-                        <p class="font-medium">오늘 등록된 데이터가 없습니다</p>
-                        <p class="text-sm mt-1">아직 아무도 출결을 입력하지 않았습니다</p>
-                    </div>
-                `;
+                container.innerHTML = '<div class="text-center py-12 text-gray-500"><i class="fas fa-calendar-day text-4xl mb-3 text-gray-300"></i><p class="font-medium">오늘 등록된 데이터가 없습니다</p></div>';
                 return;
             }
 
@@ -312,25 +292,21 @@
             
             container.innerHTML = sortedData.map(record => {
                 const index = allData.indexOf(record);
-                return `
-                <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center">
-                            <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
-                        </div>
-                        <div>
-                            <div class="font-medium">${record.studentName} (${record.studentId})</div>
-                            <div class="text-sm text-gray-500">
-                                ${record.status} • ${new Date(record.timestamp).toLocaleTimeString('ko-KR')}
-                                ${record.processed ? ' • <span class="text-blue-500">자동처리</span>' : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="deleteRecord(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `});
+                return '<div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">' +
+                '<div class="flex items-center space-x-3">' +
+                '<div class="w-8 h-8 ' + (record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600') + ' rounded-full flex items-center justify-center">' +
+                '<i class="fas ' + (record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt') + ' text-xs"></i>' +
+                '</div>' +
+                '<div>' +
+                '<div class="font-medium">' + record.studentName + ' (' + record.studentId + ')</div>' +
+                '<div class="text-sm text-gray-500">' + record.status + ' • ' + new Date(record.timestamp).toLocaleTimeString('ko-KR') + '</div>' +
+                '</div>' +
+                '</div>' +
+                '<button onclick="deleteRecord(' + index + ')" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">' +
+                '<i class="fas fa-trash"></i>' +
+                '</button>' +
+                '</div>';
+            }).join('');
         }
 
         function showByStudent() {
@@ -351,50 +327,43 @@
             const container = document.getElementById('data-list');
             const studentCount = Object.keys(students).length;
             
-            document.getElementById('record-count').textContent = `${studentCount}명의 학생 기록`;
+            document.getElementById('record-count').textContent = studentCount + '명의 학생 기록';
             
             if (studentCount === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 text-gray-500">
-                        <i class="fas fa-users text-4xl mb-3 text-gray-300"></i>
-                        <p class="font-medium">등록된 학생이 없습니다</p>
-                        <p class="text-sm mt-1">출결을 입력한 학생들이 여기에 표시됩니다</p>
-                    </div>
-                `;
+                container.innerHTML = '<div class="text-center py-12 text-gray-500"><i class="fas fa-users text-4xl mb-3 text-gray-300"></i><p class="font-medium">등록된 학생이 없습니다</p></div>';
                 return;
             }
 
-            container.innerHTML = Object.entries(students).map(([studentId, data]) => `
-                <div class="border rounded-lg p-4 bg-gray-50">
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-semibold text-gray-900">${data.name} (${studentId})</h4>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm text-gray-500 bg-white px-2 py-1 rounded">${data.records.length}개 기록</span>
-                            <button onclick="deleteStudent('${studentId}')" class="text-red-500 hover:text-red-700 text-sm bg-white px-2 py-1 rounded hover:bg-red-50 transition-colors">
-                                <i class="fas fa-trash mr-1"></i>전체삭제
-                            </button>
-                        </div>
-                    </div>
-                    <div class="space-y-1 max-h-32 overflow-y-auto">
-                        ${data.records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(record => {
-                            const allData = getData();
-                            const index = allData.indexOf(record);
-                            return `
-                            <div class="flex justify-between items-center text-sm p-2 bg-white rounded border">
-                                <span class="flex items-center">
-                                    <div class="w-4 h-4 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center mr-2">
-                                        <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
-                                    </div>
-                                    ${record.status} • ${new Date(record.timestamp).toLocaleString('ko-KR')}
-                                </span>
-                                <button onclick="deleteRecord(${index})" class="text-red-500 hover:text-red-700 px-1 py-1 rounded hover:bg-red-50 transition-colors">
-                                    <i class="fas fa-times text-xs"></i>
-                                </button>
-                            </div>
-                        `;}).join('')}
-                    </div>
-                </div>
-            `).join('');
+            container.innerHTML = Object.entries(students).map(([studentId, data]) => 
+                '<div class="border rounded-lg p-4 bg-gray-50">' +
+                '<div class="flex justify-between items-center mb-2">' +
+                '<h4 class="font-semibold text-gray-900">' + data.name + ' (' + studentId + ')</h4>' +
+                '<div class="flex items-center space-x-2">' +
+                '<span class="text-sm text-gray-500 bg-white px-2 py-1 rounded">' + data.records.length + '개 기록</span>' +
+                '<button onclick="deleteStudent(\'' + studentId + '\')" class="text-red-500 hover:text-red-700 text-sm bg-white px-2 py-1 rounded hover:bg-red-50 transition-colors">' +
+                '<i class="fas fa-trash mr-1"></i>전체삭제' +
+                '</button>' +
+                '</div>' +
+                '</div>' +
+                '<div class="space-y-1 max-h-32 overflow-y-auto">' +
+                data.records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(record => {
+                    const allData = getData();
+                    const index = allData.indexOf(record);
+                    return '<div class="flex justify-between items-center text-sm p-2 bg-white rounded border">' +
+                    '<span class="flex items-center">' +
+                    '<div class="w-4 h-4 ' + (record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600') + ' rounded-full flex items-center justify-center mr-2">' +
+                    '<i class="fas ' + (record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt') + ' text-xs"></i>' +
+                    '</div>' +
+                    record.status + ' • ' + new Date(record.timestamp).toLocaleString('ko-KR') +
+                    '</span>' +
+                    '<button onclick="deleteRecord(' + index + ')" class="text-red-500 hover:text-red-700 px-1 py-1 rounded hover:bg-red-50 transition-colors">' +
+                    '<i class="fas fa-times text-xs"></i>' +
+                    '</button>' +
+                    '</div>';
+                }).join('') +
+                '</div>' +
+                '</div>'
+            ).join('');
         }
 
         function deleteRecord(index) {
@@ -410,7 +379,7 @@
             else if (currentView === 'student') showByStudent();
             
             updateStats();
-            alert(`${deletedRecord.studentName}의 ${deletedRecord.status} 기록이 삭제되었습니다!`);
+            alert(deletedRecord.studentName + '의 ' + deletedRecord.status + ' 기록이 삭제되었습니다!');
         }
 
         function deleteStudent(studentId) {
@@ -418,7 +387,7 @@
             const studentRecord = data.find(r => r.studentId === studentId);
             const studentName = studentRecord ? studentRecord.studentName : '학생';
             
-            const confirmName = prompt(`정말로 ${studentName}의 모든 데이터를 삭제하시겠습니까? 확인을 위해 학생 이름을 입력하세요:`);
+            const confirmName = prompt('정말로 ' + studentName + '의 모든 데이터를 삭제하시겠습니까? 확인을 위해 학생 이름을 입력하세요:');
             if (!confirmName || confirmName !== studentName) {
                 if (confirmName) alert('학생 이름이 일치하지 않습니다.');
                 return;
@@ -429,7 +398,7 @@
             
             showByStudent();
             updateStats();
-            alert(`${studentName} 학생의 모든 데이터가 삭제되었습니다!`);
+            alert(studentName + ' 학생의 모든 데이터가 삭제되었습니다!');
         }
 
         function deleteToday() {
@@ -439,7 +408,7 @@
                 return;
             }
             
-            if (!confirm(`오늘의 모든 출결 데이터 ${todayCount}개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다!`)) return;
+            if (!confirm('오늘의 모든 출결 데이터 ' + todayCount + '개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다!')) return;
             
             const allData = getData();
             const today = new Date().toDateString();
@@ -454,7 +423,7 @@
             else if (currentView === 'student') showByStudent();
             
             updateStats();
-            alert(`오늘 데이터 ${todayCount}개가 삭제되었습니다!`);
+            alert('오늘 데이터 ' + todayCount + '개가 삭제되었습니다!');
         }
 
         function deleteAll() {
@@ -464,7 +433,7 @@
                 return;
             }
             
-            const confirmation = prompt(`정말로 모든 데이터 ${totalCount}개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다! 확인하려면 "모든데이터삭제"를 정확히 입력하세요:`);
+            const confirmation = prompt('정말로 모든 데이터 ' + totalCount + '개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다! 확인하려면 "모든데이터삭제"를 정확히 입력하세요:');
             
             if (confirmation !== '모든데이터삭제') {
                 if (confirmation) alert('입력이 정확하지 않습니다. 취소되었습니다.');
@@ -478,7 +447,7 @@
             else if (currentView === 'student') showByStudent();
             
             updateStats();
-            alert(`모든 데이터 ${totalCount}개가 삭제되었습니다!`);
+            alert('모든 데이터 ' + totalCount + '개가 삭제되었습니다!');
         }
 
         function exportData() {
@@ -504,10 +473,10 @@
             const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `광영여고_출결데이터_${new Date().toISOString().split('T')[0]}.csv`;
+            link.download = '광영여고_출결데이터_' + new Date().toISOString().split('T')[0] + '.csv';
             link.click();
             
-            alert(`CSV 파일이 다운로드되었습니다! (${data.length}개 기록)`);
+            alert('CSV 파일이 다운로드되었습니다! (' + data.length + '개 기록)');
         }
 
         function viewStatus() {
