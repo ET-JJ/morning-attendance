@@ -1,0 +1,50 @@
+     1	<!DOCTYPE html>
+     2	<html lang="ko">
+     3	<head>
+     4	    <meta charset="UTF-8">
+     5	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6	    <title>관리자 대시보드 - 광영여고 아침자습 (보안)</title>
+     7	    <script src="https://cdn.tailwindcss.com"></script>
+     8	    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     9	    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    10	    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    11	    <!-- 구글 로그인 SDK -->
+    12	    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    13	    <style>
+    14	        body { font-family: 'Inter', sans-serif; }
+    15	        .gradient-bg {
+    16	            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    17	        }
+    18	        .admin-card {
+    19	            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    20	        }
+    21	        .admin-card:hover {
+    22	            transform: translateY(-4px);
+    23	            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    24	        }
+    25	        .processing-spinner {
+    26	            animation: spin 1s linear infinite;
+    27	        }
+    28	        @keyframes spin {
+    29	            from { transform: rotate(0deg); }
+    30	            to { transform: rotate(360deg); }
+    31	        }
+    32	        .login-container {
+    33	            min-height: 100vh;
+    34	            display: flex;
+    35	            align-items: center;
+    36	            justify-content: center;
+    37	        }
+    38	    </style>
+    39	</head>
+    40	<body class="bg-gray-50">
+    41	    <!-- 로그인 화면 -->
+    42	    <div id="login-screen" class="login-container gradient-bg">
+    43	        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+    44	            <div class="text-center mb-8">
+    45	                <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+    46	                    <i class="fas fa-user-shield text-indigo-600 text-3xl"></i>
+    47	                </div>
+    48	                <h1 class="text-2xl font-bold text-gray-900 mb-2">관리자 로그인</h1>
+    49	                <p class="text-gray-600">JJ 선생님 전용 아침자습 관리 시스템</p>
+    50	                <div class="mt-4 text-sm text-gray-500">
