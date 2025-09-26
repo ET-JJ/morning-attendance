@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Apps Script 연동 가이드 - 광영여고 출결시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold mb-2">
+                <i class="fas fa-link mr-3"></i>
+                Google Apps Script 연동 가이드
+            </h1>
+            <p class="text-blue-100">기존 구글 스프레드시트 시스템과 웹 인터페이스를 완벽하게 연결하세요</p>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto p-6 space-y-8">
+        
+        <!-- 현재 상태 확인 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                1단계: 현재 상태 확인
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-green-50 border border-green-200 rounded p-4">
+                    <h3 class="font-semibold text-green-800 mb-2">✅ 완료된 항목</h3>
+                    <ul class="text-sm text-green-700 space-y-1">
+                        <li>• 웹 인터페이스 구축 완료</li>
+                        <li>• 학생/관리자/개인 포털 구축</li>
+                        <li>• 오프라인 모드 구현</li>
+                        <li>• Google Apps Script v8 코드 준비</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">🔗 연동 대상</h3>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li>• 스프레드시트: <code class="bg-white px-1 rounded text-xs">1dJEOyc59eZgwidKjXiYptgreAIabfBbkndN0g17Qsb8</code></li>
+                        <li>• 기존 시트: "설문지 응답", "출결 기록", "일일 요약", "마감 보고서"</li>
+                        <li>• 자동화 기능: 누락데이터 처리, 이메일 발송</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Apps Script 설정 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-code text-blue-500 mr-2"></i>
+                2단계: Google Apps Script 설정
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="bg-yellow-50 border border-yellow-200 rounded p-4">
+                    <h3 class="font-semibold text-yellow-800 mb-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        중요: 기존 코드 백업
+                    </h3>
+                    <p class="text-yellow-700 text-sm">새 코드를 적용하기 전에 기존 Apps Script 코드를 다른 곳에 백업해 두세요!</p>
+                </div>
+
+                <div class="border rounded p-4">
+                    <h3 class="font-semibold mb-2">2-1. 스프레드시트에서 Apps Script 열기</h3>
+                    <ol class="list-decimal list-inside text-sm space-y-1 text-gray-700">
+                        <li>구글 스프레드시트 열기: <a href="https://docs.google.com/spreadsheets/d/1dJEOyc59eZgwidKjXiYptgreAIabfBbkndN0g17Qsb8/edit" class="text-blue-600 underline" target="_blank">스프레드시트 바로가기</a></li>
+                        <li><strong>확장 프로그램</strong> → <strong>Apps Script</strong> 클릭</li>
+                        <li>기존 코드 전체 선택 후 백업용으로 복사</li>
+                    </ol>
+                </div>
+
+                <div class="border rounded p-4">
+                    <h3 class="font-semibold mb-2">2-2. 새 코드 적용</h3>
+                    <div class="bg-gray-100 p-3 rounded text-sm font-mono">
+                        // 제공받은 v8 Apps Script 코드를 여기에 붙여넣기
+                        <br>// doPost(), doGet(), 자동화 함수들이 모두 포함된 완전한 코드
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">선생님이 제공해주신 v8 코드를 기존 코드와 완전히 교체하세요.</p>
+                </div>
+
+                <div class="border rounded p-4">
+                    <h3 class="font-semibold mb-2">2-3. 웹앱 배포</h3>
+                    <ol class="list-decimal list-inside text-sm space-y-1 text-gray-700">
+                        <li><strong>배포</strong> → <strong>새 배포</strong> 클릭</li>
+                        <li>유형: <strong>웹 앱</strong> 선택</li>
+                        <li>설명: "광영여고 출결시스템 웹앱 v1"</li>
+                        <li>실행 계정: <strong>본인</strong></li>
+                        <li>액세스 권한: <strong>모든 사용자</strong></li>
+                        <li><strong>배포</strong> 버튼 클릭</li>
+                        <li>생성된 웹앱 URL을 복사 (매우 중요!)</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 웹 시스템 연결 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-plug text-green-500 mr-2"></i>
+                3단계: 웹 시스템 연결
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="bg-blue-50 border border-blue-200 rounded p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">연결 URL 입력</h3>
+                    <div class="space-y-3">
+                        <label class="block text-sm font-medium">Google Apps Script 웹앱 URL:</label>
+                        <div class="flex gap-2">
+                            <input 
+                                type="url" 
+                                id="appsScriptUrl" 
+                                placeholder="https://script.google.com/macros/s/.../exec"
+                                class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
+                            >
+                            <button 
+                                onclick="saveAppsScriptUrl()" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+                            >
+                                저장
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-600">2단계에서 복사한 웹앱 URL을 여기에 붙여넣으세요</p>
+                    </div>
+                </div>
+
+                <div class="border rounded p-4">
+                    <h3 class="font-semibold mb-2">연결 상태 확인</h3>
+                    <div class="flex gap-2">
+                        <button 
+                            onclick="testConnection()" 
+                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm"
+                        >
+                            <i class="fas fa-test-tube mr-1"></i>
+                            연결 테스트
+                        </button>
+                        <button 
+                            onclick="sendTestData()" 
+                            class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm"
+                        >
+                            <i class="fas fa-paper-plane mr-1"></i>
+                            테스트 데이터 전송
+                        </button>
+                    </div>
+                    <div id="connectionResult" class="mt-3 p-3 rounded hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 실시간 연동 테스트 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-flask text-purple-500 mr-2"></i>
+                4단계: 실시간 연동 테스트
+            </h2>
+            
+            <div class="bg-green-50 border border-green-200 rounded p-4">
+                <h3 class="font-semibold text-green-800 mb-3">테스트 출결 데이터 입력</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">학번</label>
+                        <input 
+                            type="text" 
+                            id="testStudentId" 
+                            placeholder="예: 20101"
+                            maxlength="5"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">이름</label>
+                        <input 
+                            type="text" 
+                            id="testStudentName" 
+                            placeholder="예: 홍길동"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">상태</label>
+                        <select id="testStatus" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+                            <option value="입실">입실</option>
+                            <option value="퇴실">퇴실</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button 
+                    onclick="submitTestAttendance()" 
+                    class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+                >
+                    <i class="fas fa-check mr-1"></i>
+                    테스트 출결 제출
+                </button>
+                
+                <div id="testResult" class="mt-3 hidden"></div>
+            </div>
+        </div>
+
+        <!-- 완료 확인 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                5단계: 연동 완료 확인
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="bg-yellow-50 border border-yellow-200 rounded p-4">
+                    <h3 class="font-semibold text-yellow-800 mb-2">확인할 항목들</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center">
+                            <input type="checkbox" id="check1" class="mr-2">
+                            <label for="check1">Google Apps Script 코드 업데이트 완료</label>
+                        </li>
+                        <li class="flex items-center">
+                            <input type="checkbox" id="check2" class="mr-2">
+                            <label for="check2">웹앱 배포 및 URL 복사 완료</label>
+                        </li>
+                        <li class="flex items-center">
+                            <input type="checkbox" id="check3" class="mr-2">
+                            <label for="check3">웹 시스템에 URL 연결 완료</label>
+                        </li>
+                        <li class="flex items-center">
+                            <input type="checkbox" id="check4" class="mr-2">
+                            <label for="check4">연결 테스트 성공</label>
+                        </li>
+                        <li class="flex items-center">
+                            <input type="checkbox" id="check5" class="mr-2">
+                            <label for="check5">테스트 데이터가 스프레드시트에 정상 기록됨</label>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="text-center">
+                    <button 
+                        onclick="completeIntegration()" 
+                        class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 text-lg font-semibold"
+                    >
+                        <i class="fas fa-rocket mr-2"></i>
+                        연동 완료! 메인 시스템으로 이동
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 문제해결 가이드 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-tools text-red-500 mr-2"></i>
+                문제해결 가이드
+            </h2>
+            
+            <div class="space-y-4">
+                <details class="border rounded p-3">
+                    <summary class="font-semibold cursor-pointer">웹앱 URL 연결이 안 될 때</summary>
+                    <div class="mt-2 text-sm text-gray-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>URL이 정확한지 확인 (끝에 /exec 포함)</li>
+                            <li>웹앱 배포 시 '모든 사용자' 권한 설정 확인</li>
+                            <li>브라우저 캐시 삭제 후 재시도</li>
+                            <li>새로운 배포로 다시 시도</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="border rounded p-3">
+                    <summary class="font-semibold cursor-pointer">데이터가 스프레드시트에 기록되지 않을 때</summary>
+                    <div class="mt-2 text-sm text-gray-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Apps Script 코드에 오타가 없는지 확인</li>
+                            <li>스프레드시트 시트명이 정확한지 확인</li>
+                            <li>Apps Script 실행 로그 확인</li>
+                            <li>스프레드시트 편집 권한 확인</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="border rounded p-3">
+                    <summary class="font-semibold cursor-pointer">권한 오류가 발생할 때</summary>
+                    <div class="mt-2 text-sm text-gray-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Apps Script 실행 시 권한 승인</li>
+                            <li>Google 계정 보안 설정 확인</li>
+                            <li>필요시 관리자 권한으로 재배포</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Google Apps Script URL 저장
+        function saveAppsScriptUrl() {
+            const url = document.getElementById('appsScriptUrl').value.trim();
+            
+            if (!url) {
+                alert('URL을 입력해주세요.');
+                return;
+            }
+            
+            if (!url.includes('script.google.com')) {
+                alert('올바른 Google Apps Script URL을 입력해주세요.');
+                return;
+            }
+            
+            // LocalStorage에 저장
+            localStorage.setItem('appsScriptUrl', url);
+            
+            // 모든 시스템 파일에 URL 적용
+            updateAllSystemsWithUrl(url);
+            
+            alert('Google Apps Script URL이 성공적으로 저장되었습니다!');
+        }
+
+        // 모든 시스템에 URL 업데이트
+        function updateAllSystemsWithUrl(url) {
+            // 실제로는 각 HTML 파일의 JavaScript 부분을 업데이트해야 함
+            // 여기서는 localStorage에 저장하여 각 페이지에서 참조하도록 함
+            localStorage.setItem('googleAppsScriptConfigured', 'true');
+            localStorage.setItem('integrationMode', 'online');
+        }
+
+        // 연결 테스트
+        async function testConnection() {
+            const url = localStorage.getItem('appsScriptUrl');
+            const resultDiv = document.getElementById('connectionResult');
+            
+            if (!url) {
+                showResult('먼저 Google Apps Script URL을 저장해주세요.', 'error');
+                return;
+            }
+            
+            resultDiv.className = 'mt-3 p-3 rounded bg-blue-50 border border-blue-200';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>연결 테스트 중...';
+            resultDiv.classList.remove('hidden');
+            
+            try {
+                const testUrl = `${url}?action=test`;
+                const response = await fetch(testUrl);
+                const data = await response.text();
+                
+                if (data.includes('test_ok') || response.ok) {
+                    showResult('✅ 연결 성공! Google Apps Script와 정상적으로 연결되었습니다.', 'success');
+                } else {
+                    showResult('❌ 연결 실패: 응답을 확인할 수 없습니다.', 'error');
+                }
+            } catch (error) {
+                showResult(`❌ 연결 실패: ${error.message}`, 'error');
+            }
+        }
+
+        // 테스트 데이터 전송
+        async function sendTestData() {
+            const url = localStorage.getItem('appsScriptUrl');
+            
+            if (!url) {
+                alert('먼저 Google Apps Script URL을 저장해주세요.');
+                return;
+            }
+            
+            const testData = {
+                action: 'submit',
+                student_id: '99999',
+                student_name: '테스트',
+                status: '입실',
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: Object.keys(testData).map(key => 
+                        encodeURIComponent(key) + '=' + encodeURIComponent(testData[key])
+                    ).join('&')
+                });
+                
+                if (response.ok) {
+                    showResult('✅ 테스트 데이터 전송 성공! 스프레드시트를 확인해보세요.', 'success');
+                } else {
+                    showResult('❌ 테스트 데이터 전송 실패', 'error');
+                }
+            } catch (error) {
+                showResult(`❌ 전송 오류: ${error.message}`, 'error');
+            }
+        }
+
+        // 테스트 출결 제출
+        async function submitTestAttendance() {
+            const studentId = document.getElementById('testStudentId').value.trim();
+            const studentName = document.getElementById('testStudentName').value.trim();
+            const status = document.getElementById('testStatus').value;
+            
+            if (!studentId || !studentName) {
+                alert('학번과 이름을 입력해주세요.');
+                return;
+            }
+            
+            const url = localStorage.getItem('appsScriptUrl');
+            if (!url) {
+                alert('먼저 Google Apps Script URL을 저장해주세요.');
+                return;
+            }
+            
+            const data = {
+                action: 'submit',
+                student_id: studentId,
+                student_name: studentName,
+                status: status,
+                timestamp: new Date().toISOString()
+            };
+            
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.className = 'mt-3 p-3 rounded bg-blue-50 border border-blue-200';
+            resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>테스트 데이터 전송 중...';
+            resultDiv.classList.remove('hidden');
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: Object.keys(data).map(key => 
+                        encodeURIComponent(key) + '=' + encodeURIComponent(data[key])
+                    ).join('&')
+                });
+                
+                if (response.ok) {
+                    resultDiv.className = 'mt-3 p-3 rounded bg-green-50 border border-green-200';
+                    resultDiv.innerHTML = '✅ 테스트 출결 데이터가 성공적으로 전송되었습니다! 스프레드시트에서 확인해보세요.';
+                    
+                    // 폼 초기화
+                    document.getElementById('testStudentId').value = '';
+                    document.getElementById('testStudentName').value = '';
+                } else {
+                    resultDiv.className = 'mt-3 p-3 rounded bg-red-50 border border-red-200';
+                    resultDiv.innerHTML = '❌ 테스트 데이터 전송에 실패했습니다.';
+                }
+            } catch (error) {
+                resultDiv.className = 'mt-3 p-3 rounded bg-red-50 border border-red-200';
+                resultDiv.innerHTML = `❌ 전송 오류: ${error.message}`;
+            }
+        }
+
+        // 결과 표시 헬퍼 함수
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('connectionResult');
+            const className = type === 'success' ? 
+                'mt-3 p-3 rounded bg-green-50 border border-green-200' :
+                'mt-3 p-3 rounded bg-red-50 border border-red-200';
+            
+            resultDiv.className = className;
+            resultDiv.innerHTML = message;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // 연동 완료
+        function completeIntegration() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            if (!allChecked) {
+                alert('모든 항목을 확인하신 후 완료해주세요.');
+                return;
+            }
+            
+            // 연동 완료 표시
+            localStorage.setItem('googleAppsScriptIntegrated', 'true');
+            localStorage.setItem('integrationCompletedAt', new Date().toISOString());
+            
+            alert('🎉 Google Apps Script 연동이 완료되었습니다!\n\n이제 메인 시스템에서 실시간 연동 기능을 사용하실 수 있습니다.');
+            
+            // 메인 페이지로 이동
+            window.location.href = './index.html';
+        }
+
+        // 페이지 로드 시 저장된 URL 불러오기
+        window.addEventListener('load', function() {
+            const savedUrl = localStorage.getItem('appsScriptUrl');
+            if (savedUrl) {
+                document.getElementById('appsScriptUrl').value = savedUrl;
+            }
+        });
+    </script>
+</body>
+</html>
