@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>출결 현황 - 광영여고 아침자습</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-normal { @apply bg-green-100 text-green-800; }
+        .status-partial { @apply bg-yellow-100 text-yellow-800; }
+        .status-missing { @apply bg-red-100 text-red-800; }
+        .status-processed { @apply bg-blue-100 text-blue-800; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 헤더 -->
+    <header class="gradient-bg shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-white mb-1">
+                        <i class="fas fa-chart-line mr-2"></i>실시간 출결 현황
+                    </h1>
+                    <p class="text-indigo-100">광영여자고등학교 아침자습</p>
+                </div>
+                <div class="text-right text-white">
+                    <div class="text-lg font-semibold" id="current-date"></div>
+                    <div class="text-sm text-indigo-200" id="current-time"></div>
+                    <div class="flex items-center justify-end mt-2">
+                        <span class="w-2 h-2 bg-green-400 rounded-full pulse-dot mr-1"></span>
+                        <span class="text-xs">실시간 업데이트</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- 빠른 통계 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- 전체 출석 -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-sm font-medium text-gray-500">전체 출석</h3>
+                        <p class="text-2xl font-bold text-gray-900" id="total-count">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 정상 완료 -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-sm font-medium text-gray-500">정상 완료</h3>
+                        <p class="text-2xl font-bold text-gray-900" id="completed-count">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 진행 중 -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-sm font-medium text-gray-500">진행 중</h3>
+                        <p class="text-2xl font-bold text-gray-900" id="ongoing-count">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 누락/문제 -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-sm font-medium text-gray-500">누락/문제</h3>
+                        <p class="text-2xl font-bold text-gray-900" id="missing-count">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 필터 및 검색 -->
+        <div class="bg-white rounded-lg shadow p-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center space-x-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">날짜</label>
+                        <input type="date" id="date-filter" class="border border-gray-300 rounded-md px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">상태</label>
+                        <select id="status-filter" class="border border-gray-300 rounded-md px-3 py-2">
+                            <option value="">전체</option>
+                            <option value="완료">완료</option>
+                            <option value="진행중">진행중</option>
+                            <option value="누락">누락</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="search-input" 
+                            placeholder="학번 또는 이름 검색..." 
+                            class="border border-gray-300 rounded-md pl-10 pr-4 py-2 w-64"
+                        >
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <button onclick="refreshData()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">
+                        <i class="fas fa-sync-alt mr-1"></i>새로고침
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 출결 현황 테이블 -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-table mr-2 text-indigo-600"></i>
+                    출결 현황 목록
+                </h2>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">학번</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이름</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">입실시간</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">퇴실시간</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">학습시간</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">비고</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-table" class="bg-white divide-y divide-gray-200">
+                        <!-- 동적으로 생성될 데이터 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 빈 상태 -->
+            <div id="empty-state" class="hidden text-center py-12">
+                <i class="fas fa-inbox text-gray-400 text-4xl mb-4"></i>
+                <p class="text-gray-500">아직 출결 데이터가 없습니다.</p>
+                <a href="index.html" class="inline-block mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-plus mr-1"></i>출결 입력하기
+                </a>
+            </div>
+        </div>
+
+        <!-- 빠른 액션 -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="index.html" class="bg-white border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
+                <i class="fas fa-plus-circle text-2xl text-indigo-600 mb-2"></i>
+                <h3 class="font-medium text-gray-900">출결 입력</h3>
+                <p class="text-sm text-gray-500">새로운 출결 기록</p>
+            </a>
+            
+            <a href="admin.html" class="bg-white border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
+                <i class="fas fa-cogs text-2xl text-purple-600 mb-2"></i>
+                <h3 class="font-medium text-gray-900">관리자 메뉴</h3>
+                <p class="text-sm text-gray-500">데이터 관리 및 설정</p>
+            </a>
+            
+            <button onclick="exportData()" class="bg-white border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors">
+                <i class="fas fa-download text-2xl text-green-600 mb-2"></i>
+                <h3 class="font-medium text-gray-900">데이터 내보내기</h3>
+                <p class="text-sm text-gray-500">Excel 파일로 저장</p>
+            </button>
+        </div>
+    </main>
+
+    <!-- API 모듈 로드 -->
+    <script src="js/api.js"></script>
+    
+    <script>
+        // 현재 시간 업데이트
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('current-date').textContent = 
+                now.toLocaleDateString('ko-KR', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric', 
+                    weekday: 'long' 
+                });
+            document.getElementById('current-time').textContent = 
+                now.toLocaleTimeString('ko-KR');
+        }
+
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // 오늘 날짜를 기본값으로 설정
+        document.getElementById('date-filter').valueAsDate = new Date();
+
+        // 출결 데이터 로드 및 표시
+        async function loadAttendanceData() {
+            const selectedDate = document.getElementById('date-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+
+            // API를 통해 데이터 조회
+            const result = await window.attendanceAPI.getAttendanceData({ 
+                date: selectedDate 
+            });
+            
+            if (!result.success) {
+                console.error('데이터 로드 실패:', result.message);
+                return;
+            }
+
+            // 필터링
+            const filteredData = result.data.filter(record => {
+                const matchesSearch = !searchTerm || 
+                    record.studentId.toLowerCase().includes(searchTerm) || 
+                    record.studentName.toLowerCase().includes(searchTerm);
+                
+                return matchesSearch;
+            });
+
+            // 학생별 데이터 집계
+            const studentData = {};
+            filteredData.forEach(record => {
+                const key = record.studentId;
+                if (!studentData[key]) {
+                    studentData[key] = {
+                        studentId: record.studentId,
+                        studentName: record.studentName,
+                        checkIn: null,
+                        checkOut: null,
+                        records: []
+                    };
+                }
+                
+                studentData[key].records.push(record);
+                
+                if (record.status === '입실') {
+                    const checkTime = new Date(record.timestamp);
+                    if (!studentData[key].checkIn || checkTime < new Date(studentData[key].checkIn.timestamp)) {
+                        studentData[key].checkIn = record;
+                    }
+                } else if (record.status === '퇴실') {
+                    const checkTime = new Date(record.timestamp);
+                    if (!studentData[key].checkOut || checkTime > new Date(studentData[key].checkOut.timestamp)) {
+                        studentData[key].checkOut = record;
+                    }
+                }
+            });
+
+            // 통계 업데이트
+            updateStatistics(Object.values(studentData));
+
+            // 테이블 업데이트
+            updateAttendanceTable(Object.values(studentData), statusFilter);
+        }
+
+        // 통계 업데이트
+        function updateStatistics(studentData) {
+            const total = studentData.length;
+            let completed = 0;
+            let ongoing = 0;
+            let missing = 0;
+
+            studentData.forEach(student => {
+                if (student.checkIn && student.checkOut) {
+                    completed++;
+                } else if (student.checkIn && !student.checkOut) {
+                    ongoing++;
+                } else {
+                    missing++;
+                }
+            });
+
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('completed-count').textContent = completed;
+            document.getElementById('ongoing-count').textContent = ongoing;
+            document.getElementById('missing-count').textContent = missing;
+        }
+
+        // 테이블 업데이트
+        function updateAttendanceTable(studentData, statusFilter) {
+            const tableBody = document.getElementById('attendance-table');
+            const emptyState = document.getElementById('empty-state');
+
+            if (studentData.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            // 상태별 필터링
+            const filteredStudents = studentData.filter(student => {
+                if (!statusFilter) return true;
+                
+                const status = getStudentStatus(student);
+                return status.includes(statusFilter);
+            });
+
+            tableBody.innerHTML = filteredStudents.map(student => {
+                const checkInTime = student.checkIn ? formatTime(student.checkIn.timestamp) : '-';
+                const checkOutTime = student.checkOut ? formatTime(student.checkOut.timestamp) : '-';
+                const studyTime = calculateStudyTime(student.checkIn, student.checkOut);
+                const status = getStudentStatus(student);
+                const statusBadge = getStatusBadge(status);
+                const notes = getStudentNotes(student);
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">${student.studentId}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.studentName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${checkInTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${checkOutTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${studyTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${notes}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 학생 상태 계산
+        function getStudentStatus(student) {
+            if (student.checkIn && student.checkOut) {
+                return '완료';
+            } else if (student.checkIn && !student.checkOut) {
+                return '진행중';
+            } else {
+                return '누락';
+            }
+        }
+
+        // 상태 배지 생성
+        function getStatusBadge(status) {
+            const badgeClasses = {
+                '완료': 'status-badge status-normal',
+                '진행중': 'status-badge status-partial', 
+                '누락': 'status-badge status-missing'
+            };
+
+            const icons = {
+                '완료': 'fas fa-check-circle',
+                '진행중': 'fas fa-clock',
+                '누락': 'fas fa-exclamation-triangle'
+            };
+
+            return `<span class="${badgeClasses[status]}">
+                <i class="${icons[status]} mr-1"></i>${status}
+            </span>`;
+        }
+
+        // 학습시간 계산
+        function calculateStudyTime(checkIn, checkOut) {
+            if (!checkIn || !checkOut) return '-';
+            
+            const start = new Date(checkIn.timestamp);
+            const end = new Date(checkOut.timestamp);
+            const diffMs = end - start;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            
+            if (diffMins <= 0) return '오류';
+            
+            const hours = Math.floor(diffMins / 60);
+            const mins = diffMins % 60;
+            
+            if (hours > 0) {
+                return `${hours}시간 ${mins}분`;
+            } else {
+                return `${mins}분`;
+            }
+        }
+
+        // 시간 포맷팅
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // 학생 비고사항
+        function getStudentNotes(student) {
+            const notes = [];
+            
+            if (student.checkIn) {
+                const checkInTime = new Date(student.checkIn.timestamp);
+                const hour = checkInTime.getHours();
+                
+                if (hour >= 8) {
+                    notes.push('지각 입실');
+                } else if (hour < 5) {
+                    notes.push('시간외 입실');
+                }
+            }
+            
+            if (student.checkOut) {
+                const checkOutTime = new Date(student.checkOut.timestamp);
+                const hour = checkOutTime.getHours();
+                const minute = checkOutTime.getMinutes();
+                
+                if (hour > 7 || (hour === 7 && minute > 50)) {
+                    notes.push('늦은 퇴실');
+                }
+            }
+            
+            return notes.length > 0 ? notes.join(', ') : '-';
+        }
+
+        // 데이터 새로고침
+        async function refreshData() {
+            await loadAttendanceData();
+        }
+
+        // 데이터 내보내기
+        function exportData() {
+            try {
+                const result = window.attendanceAPI.exportData('csv');
+                if (result.success) {
+                    alert(result.message);
+                }
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // 이벤트 리스너
+        document.getElementById('date-filter').addEventListener('change', loadAttendanceData);
+        document.getElementById('status-filter').addEventListener('change', loadAttendanceData);
+        document.getElementById('search-input').addEventListener('input', loadAttendanceData);
+
+        // 초기 데이터 로드
+        loadAttendanceData();
+
+        // 실시간 업데이트 (30초마다)
+        setInterval(loadAttendanceData, 30000);
+    </script>
+</body>
+</html>
