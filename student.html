@@ -3,811 +3,670 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>개인 학습 현황 - 광영여고 아침자습</title>
+    <title>JJ 선생님 관리자 대시보드</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Apps Script 연동 API -->
+    <script src="js/api.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .stats-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .stats-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        .achievement-badge {
-            animation: bounce 2s infinite;
-        }
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
-        }
+        body { font-family: 'Arial', sans-serif; }
+        .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     </style>
 </head>
-<body class="gradient-bg min-h-screen">
-    <!-- 헤더 -->
-    <header class="text-white py-6">
-        <div class="max-w-6xl mx-auto px-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold mb-1">
-                        <i class="fas fa-user-graduate mr-2"></i>
-                        개인 학습 현황
-                    </h1>
-                    <p class="text-indigo-100">광영여자고등학교 아침자습 기록</p>
-                </div>
-                <div class="text-right">
-                    <div class="text-lg font-semibold" id="current-date"></div>
-                    <div class="text-sm text-indigo-200" id="current-time"></div>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- 메인 컨텐츠 -->
-    <main class="max-w-6xl mx-auto px-4 pb-8">
-        <!-- 학번 입력 폼 -->
-        <div id="search-section" class="glass-effect rounded-2xl shadow-2xl p-6 mb-8">
+<body class="bg-gray-50">
+    <!-- 로그인 화면 -->
+    <div id="login" class="min-h-screen flex items-center justify-center gradient-bg">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4">
             <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-search text-white text-2xl"></i>
+                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-shield text-indigo-600 text-2xl"></i>
                 </div>
-                <h2 class="text-xl font-bold text-black mb-2">나의 학습 기록 조회</h2>
-                <p class="text-black">학번을 입력하여 개인 출결 현황을 확인하세요</p>
+                <h1 class="text-2xl font-bold text-gray-800">JJ 선생님 전용</h1>
+                <p class="text-gray-600 mb-2">아침자습 관리 시스템</p>
+                <p class="text-sm text-green-600">완전한 삭제 기능 포함</p>
+            </div>
+            
+            <div class="space-y-4">
+                <input 
+                    type="password" 
+                    id="password" 
+                    placeholder="관리자 비밀번호 입력" 
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-center"
+                    onkeypress="if(event.key==='Enter') login()"
+                >
+                <button 
+                    onclick="login()" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg font-semibold btn-hover transition-all"
+                >
+                    <i class="fas fa-sign-in-alt mr-2"></i>관리자 로그인
+                </button>
+                
+                <div class="text-center text-sm text-gray-500 space-y-1">
+                    <div class="text-xs text-gray-400">
+                        <i class="fas fa-lock mr-1"></i>
+                        JJ 선생님 전용 - 승인된 계정만 접근 가능
+                    </div>
+                    <div class="text-xs text-blue-600">2024.09.26 보안 강화 버전</div>
+                </div>
             </div>
 
-            <div class="max-w-md mx-auto">
-                <div class="flex space-x-3">
-                    <input 
-                        type="text" 
-                        id="student-search" 
-                        placeholder="학번 입력 (예: 20101)" 
-                        class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg text-center font-mono"
-                        maxlength="5"
-                        pattern="[0-9]{5}"
-                    >
-                    <button 
-                        onclick="searchStudent()" 
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
-                    >
-                        <i class="fas fa-search mr-2"></i>조회
-                    </button>
-                </div>
-                <div class="text-xs text-black mt-2 text-center">5자리 학번을 정확히 입력해주세요</div>
-            </div>
-        </div>
-
-        <!-- 학생 정보가 없을 때 -->
-        <div id="no-data-message" class="hidden glass-effect rounded-xl p-8 text-center">
-            <i class="fas fa-search text-black text-4xl mb-4"></i>
-            <h3 class="text-lg font-semibold text-black mb-2">기록을 찾을 수 없습니다</h3>
-            <p class="text-black mb-4">입력하신 학번의 출결 기록이 없습니다.</p>
-            <div class="text-sm text-black">
-                <p>• 학번을 정확히 입력했는지 확인해주세요</p>
-                <p>• 아직 출결을 입력하지 않았다면 먼저 출결을 입력해주세요</p>
-            </div>
-            <div class="mt-6">
-                <a href="index.html" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium inline-block">
-                    <i class="fas fa-plus mr-2"></i>출결 입력하러 가기
+            <div class="mt-6 text-center">
+                <a href="index.html" class="text-sm text-indigo-600 hover:text-indigo-800">
+                    출결 입력 페이지로 돌아가기
                 </a>
             </div>
         </div>
+    </div>
 
-        <!-- 학생 개인 통계 (조회 후 표시) -->
-        <div id="student-stats" class="hidden space-y-8">
-            <!-- 학생 정보 헤더 -->
-            <div class="glass-effect rounded-xl p-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
-                            <span id="student-initial" class="text-white text-xl font-bold">학</span>
-                        </div>
+    <!-- 관리자 대시보드 -->
+    <div id="dashboard" class="hidden min-h-screen bg-gray-50">
+        <!-- 헤더 -->
+        <div class="gradient-bg text-white py-4">
+            <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        JJ 선생님 관리자 대시보드
+                    </h1>
+                    <p class="text-sm text-indigo-200">광영여자고등학교 아침자습 시스템 v2.0</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm" id="current-time"></div>
+                    <button onclick="logout()" class="text-xs bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded mt-1 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-1"></i>로그아웃
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 내용 -->
+        <div class="max-w-6xl mx-auto p-4">
+            <!-- 통계 카드 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-900" id="student-info">김학생 (20101)</h2>
-                            <p class="text-black">광영여자고등학교 2학년</p>
+                            <p class="text-sm text-gray-600">총 학생</p>
+                            <p class="text-2xl font-bold text-blue-600" id="total-students">0</p>
+                        </div>
+                        <i class="fas fa-users text-blue-400 text-xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">완료</p>
+                            <p class="text-2xl font-bold text-green-600" id="completed">0</p>
+                        </div>
+                        <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">진행중</p>
+                            <p class="text-2xl font-bold text-yellow-600" id="ongoing">0</p>
+                        </div>
+                        <i class="fas fa-clock text-yellow-400 text-xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">미입력</p>
+                            <p class="text-2xl font-bold text-red-600" id="missing">0</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Apps Script 연동 상태 -->
+            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl p-6 mb-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold flex items-center">
+                            <i class="fas fa-link mr-3"></i>
+                            Google Apps Script v8 연동 상태
+                        </h3>
+                        <p class="text-sm opacity-90 mt-1">JJ 선생님의 기존 구글 스프레드시트 시스템</p>
+                        <div class="flex items-center mt-2">
+                            <div id="connection-status" class="flex items-center">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                <span class="text-sm">연결 상태 확인 중...</span>
+                            </div>
                         </div>
                     </div>
-                    <button onclick="resetSearch()" class="text-black hover:text-gray-800">
-                        <i class="fas fa-search mr-1"></i>다시 검색
+                    <div class="text-right">
+                        <button onclick="openIntegrationGuide()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-2 block">
+                            <i class="fas fa-cog mr-1"></i>연동 설정
+                        </button>
+                        <button onclick="checkConnection()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fas fa-sync mr-1"></i>상태 새로고침
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 연동 기능 버튼들 -->
+                <div id="integration-features" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button onclick="syncWithGoogleSheets()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
+                        <i class="fas fa-cloud-upload-alt text-lg mb-1 block"></i>
+                        <div class="font-medium">데이터 동기화</div>
+                        <div class="text-xs opacity-80">오프라인 데이터를 구글로 전송</div>
+                    </button>
+                    
+                    <button onclick="triggerAutomation()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
+                        <i class="fas fa-robot text-lg mb-1 block"></i>
+                        <div class="font-medium">자동화 실행</div>
+                        <div class="text-xs opacity-80">누락 데이터 자동 처리</div>
+                    </button>
+                    
+                    <button onclick="openSpreadsheet()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
+                        <i class="fas fa-external-link-alt text-lg mb-1 block"></i>
+                        <div class="font-medium">스프레드시트 열기</div>
+                        <div class="text-xs opacity-80">구글 시트에서 직접 확인</div>
                     </button>
                 </div>
             </div>
 
-            <!-- 주요 통계 카드들 -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <!-- 총 출석일수 -->
-                <div class="glass-effect rounded-xl p-6 stats-card">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-sm font-medium text-black">총 출석일수</h3>
-                            <p class="text-2xl font-bold text-gray-900" id="total-days">0</p>
-                            <p class="text-sm text-blue-600">일</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 누적 학습시간 -->
-                <div class="glass-effect rounded-xl p-6 stats-card">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-clock text-green-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-sm font-medium text-black">누적 학습시간</h3>
-                            <p class="text-2xl font-bold text-gray-900" id="total-study-time">0</p>
-                            <p class="text-sm text-green-600">분</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 평균 학습시간 -->
-                <div class="glass-effect rounded-xl p-6 stats-card">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-chart-line text-purple-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-sm font-medium text-black">평균 학습시간</h3>
-                            <p class="text-2xl font-bold text-gray-900" id="avg-study-time">0</p>
-                            <p class="text-sm text-purple-600">분</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 출석률 -->
-                <div class="glass-effect rounded-xl p-6 stats-card">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-percentage text-yellow-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-sm font-medium text-black">출석률</h3>
-                            <p class="text-2xl font-bold text-gray-900" id="attendance-rate">0</p>
-                            <p class="text-sm text-yellow-600">%</p>
-                        </div>
-                    </div>
-                </div>
+            <!-- 관리 기능 버튼들 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <button onclick="exportData()" class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
+                    <i class="fas fa-download text-xl mb-2 block"></i>
+                    <div class="font-semibold">CSV 다운로드</div>
+                    <div class="text-xs opacity-90">로컬 데이터 내보내기</div>
+                </button>
+                
+                <button onclick="deleteToday()" class="bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
+                    <i class="fas fa-calendar-times text-xl mb-2 block"></i>
+                    <div class="font-semibold">오늘 데이터 삭제</div>
+                    <div class="text-xs opacity-90">오늘 로컬 기록만 삭제</div>
+                </button>
+                
+                <button onclick="deleteAll()" class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
+                    <i class="fas fa-trash text-xl mb-2 block"></i>
+                    <div class="font-semibold">로컬 데이터 삭제</div>
+                    <div class="text-xs opacity-90">로컬 저장소만 초기화</div>
+                </button>
+                
+                <button onclick="viewStatus()" class="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
+                    <i class="fas fa-chart-bar text-xl mb-2 block"></i>
+                    <div class="font-semibold">전체 현황</div>
+                    <div class="text-xs opacity-90">현황 페이지 이동</div>
+                </button>
             </div>
 
-            <!-- 성취 배지 -->
-            <div id="achievements" class="glass-effect rounded-xl p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-trophy text-yellow-500 mr-2"></i>
-                    성취 배지
-                </h3>
-                <div id="badge-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <!-- 동적으로 생성될 배지들 -->
-                </div>
-            </div>
-
-            <!-- 차트 영역 -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- 주간 학습 패턴 -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-chart-bar text-indigo-500 mr-2"></i>
-                        최근 7일 학습 패턴
+            <!-- 데이터 목록 -->
+            <div class="bg-white rounded-xl shadow-sm border p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-list mr-2"></i>출결 기록 관리
+                        <span class="ml-2 text-sm font-normal text-gray-500" id="record-count">총 0개 기록</span>
                     </h3>
-                    <div style="height: 300px;">
-                        <canvas id="weeklyChart"></canvas>
+                    <div class="flex space-x-2">
+                        <button onclick="showAll()" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200 transition-colors">전체</button>
+                        <button onclick="showToday()" class="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200 transition-colors">오늘</button>
+                        <button onclick="showByStudent()" class="px-3 py-1 bg-purple-100 text-purple-700 rounded text-sm hover:bg-purple-200 transition-colors">학생별</button>
                     </div>
                 </div>
-
-                <!-- 월별 누적 -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-chart-line text-purple-500 mr-2"></i>
-                        월별 누적 학습시간
-                    </h3>
-                    <div style="height: 300px;">
-                        <canvas id="monthlyChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 최근 출결 기록 -->
-            <div class="glass-effect rounded-xl p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-history text-black mr-2"></i>
-                    최근 출결 기록
-                </h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">날짜</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">입실시간</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">퇴실시간</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">학습시간</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">상태</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recent-records" class="divide-y divide-gray-200">
-                            <!-- 동적으로 생성될 기록들 -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 학습 목표 및 격려 -->
-            <div class="glass-effect rounded-xl p-6 text-center">
-                <div id="encouragement-section">
-                    <i class="fas fa-star text-yellow-500 text-3xl mb-4"></i>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">훌륭해요! 🎉</h3>
-                    <p class="text-gray-600 mb-4" id="encouragement-text">꾸준한 아침자습으로 실력을 쌓고 있어요!</p>
-                    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4">
-                        <p class="text-sm text-gray-700" id="next-goal">다음 목표: 30일 연속 출석 달성까지 5일 남았어요!</p>
+                
+                <div id="data-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-database text-3xl mb-2 text-gray-300"></i>
+                        <p>데이터를 불러오는 중...</p>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- 빠른 링크 -->
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="index.html" class="glass-effect rounded-xl p-4 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
-                <i class="fas fa-plus-circle text-indigo-600 mb-2"></i>
-                <div class="font-medium">출결 입력</div>
-                <div class="text-sm text-black">새로운 기록 추가</div>
-            </a>
-            
-            <a href="status.html" class="glass-effect rounded-xl p-4 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
-                <i class="fas fa-users text-purple-600 mb-2"></i>
-                <div class="font-medium">전체 현황</div>
-                <div class="text-sm text-black">모든 학생 현황</div>
-            </a>
-            
-            <button onclick="shareResults()" class="glass-effect rounded-xl p-4 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
-                <i class="fas fa-share text-green-600 mb-2"></i>
-                <div class="font-medium">결과 공유</div>
-                <div class="text-sm text-black">스크린샷 저장</div>
-            </button>
-        </div>
-    </main>
+    </div>
 
     <script>
-        // ===== API 모듈 (인라인 통합) =====
-        const AttendanceAPI = {
-            // 오프라인 우선 API 시스템
-            baseUrl: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec',
-            
-            // 로컬 스토리지 키
-            storageKeys: {
-                attendance: 'attendanceData',
-                lastSync: 'lastSyncTime',
-                offlineQueue: 'offlineQueue'
-            },
-
-            // 로컬 데이터 저장
-            saveToLocal(data, key = 'attendanceData') {
-                try {
-                    const existingData = this.getFromLocal(key);
-                    const newData = Array.isArray(existingData) ? [...existingData, data] : [data];
-                    localStorage.setItem(key, JSON.stringify(newData));
-                    return true;
-                } catch (error) {
-                    console.error('로컬 저장 실패:', error);
-                    return false;
-                }
-            },
-
-            // 로컬 데이터 조회
-            getFromLocal(key = 'attendanceData') {
-                try {
-                    const data = localStorage.getItem(key);
-                    return data ? JSON.parse(data) : [];
-                } catch (error) {
-                    console.error('로컬 조회 실패:', error);
-                    return [];
-                }
-            },
-
-            // 출결 데이터 조회
-            async getAttendanceData() {
-                return new Promise((resolve) => {
-                    const localData = this.getFromLocal();
-                    resolve({
-                        success: true,
-                        data: localData,
-                        source: 'local'
-                    });
-                });
-            },
-
-            // 출결 데이터 저장
-            async saveAttendance(attendanceData) {
-                return new Promise((resolve) => {
-                    const success = this.saveToLocal(attendanceData);
-                    
-                    if (success) {
-                        // 오프라인 큐에도 추가 (나중에 동기화용)
-                        this.addToOfflineQueue(attendanceData);
-                        
-                        resolve({
-                            success: true,
-                            message: '출결이 성공적으로 저장되었습니다.',
-                            source: 'local'
-                        });
-                    } else {
-                        resolve({
-                            success: false,
-                            message: '저장 중 오류가 발생했습니다.',
-                            source: 'local'
-                        });
-                    }
-                });
-            },
-
-            // 오프라인 큐 관리
-            addToOfflineQueue(data) {
-                const queue = this.getFromLocal('offlineQueue');
-                queue.push({
-                    action: 'save',
-                    data: data,
-                    timestamp: new Date().toISOString()
-                });
-                localStorage.setItem('offlineQueue', JSON.stringify(queue));
-            },
-
-            // Google Apps Script와 동기화 시도 (선택적)
-            async syncWithGoogleScript(data) {
-                try {
-                    const response = await fetch(this.baseUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
-                    });
-                    
-                    return await response.json();
-                } catch (error) {
-                    console.log('Google Script 동기화 실패, 로컬 저장으로 계속:', error);
-                    return { success: false, error: error.message };
-                }
-            },
-
-            // 통계 계산
-            calculateStats(data) {
-                const today = new Date().toDateString();
-                const todayRecords = data.filter(record => 
-                    new Date(record.timestamp).toDateString() === today
-                );
-
-                const totalStudents = new Set(data.map(record => record.studentId)).size;
-                const todayAttendance = new Set(todayRecords.map(record => record.studentId)).size;
-
-                // 시간대별 입실 현황
-                const timeSlots = {
-                    '05:00-06:00': 0,
-                    '06:00-07:00': 0,
-                    '07:00-08:00': 0
-                };
-
-                todayRecords.forEach(record => {
-                    if (record.status === '입실') {
-                        const hour = new Date(record.timestamp).getHours();
-                        if (hour === 5) timeSlots['05:00-06:00']++;
-                        else if (hour === 6) timeSlots['06:00-07:00']++;
-                        else if (hour === 7) timeSlots['07:00-08:00']++;
-                    }
-                });
-
-                return {
-                    totalStudents,
-                    todayAttendance,
-                    attendanceRate: totalStudents > 0 ? Math.round((todayAttendance / totalStudents) * 100) : 0,
-                    timeSlots,
-                    todayRecords
-                };
-            }
-        };
-
-        let currentStudentId = null;
-        let weeklyChart = null;
-        let monthlyChart = null;
-
-        // 시간 업데이트
-        function updateDateTime() {
+        let currentView = 'all';
+        
+        function updateTime() {
             const now = new Date();
-            document.getElementById('current-date').textContent = 
-                now.toLocaleDateString('ko-KR', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric', 
-                    weekday: 'long' 
-                });
-            document.getElementById('current-time').textContent = 
-                now.toLocaleTimeString('ko-KR');
-        }
-
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
-
-        // 학번 검색
-        function searchStudent() {
-            const studentId = document.getElementById('student-search').value.trim();
-            
-            if (!studentId.match(/^[0-9]{5}$/)) {
-                alert('학번을 5자리 숫자로 정확히 입력해주세요.');
-                return;
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleString('ko-KR');
             }
-            
-            const attendanceData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-            const studentRecords = attendanceData.filter(record => record.studentId === studentId);
-            
-            if (studentRecords.length === 0) {
-                showNoData();
-                return;
-            }
-            
-            currentStudentId = studentId;
-            showStudentStats(studentRecords);
         }
 
-        // 데이터 없음 표시
-        function showNoData() {
-            document.getElementById('search-section').classList.add('hidden');
-            document.getElementById('no-data-message').classList.remove('hidden');
-            document.getElementById('student-stats').classList.add('hidden');
-        }
-
-        // 검색 초기화
-        function resetSearch() {
-            document.getElementById('search-section').classList.remove('hidden');
-            document.getElementById('no-data-message').classList.add('hidden');
-            document.getElementById('student-stats').classList.add('hidden');
-            document.getElementById('student-search').value = '';
-            currentStudentId = null;
-        }
-
-        // 학생 통계 표시
-        function showStudentStats(records) {
-            document.getElementById('search-section').classList.add('hidden');
-            document.getElementById('no-data-message').classList.add('hidden');
-            document.getElementById('student-stats').classList.remove('hidden');
-            
-            // 학생 정보 설정
-            const studentName = records[0].studentName;
-            document.getElementById('student-info').textContent = `${studentName} (${currentStudentId})`;
-            document.getElementById('student-initial').textContent = studentName.charAt(0);
-            
-            // 일별 데이터 집계
-            const dailyData = aggregateDailyData(records);
-            
-            // 통계 계산
-            const stats = calculateStudentStats(dailyData);
-            
-            // 통계 표시
-            updateStatsDisplay(stats);
-            
-            // 성취 배지 표시
-            updateAchievements(stats);
-            
-            // 차트 업데이트
-            updateCharts(dailyData);
-            
-            // 최근 기록 표시
-            updateRecentRecords(dailyData);
-            
-            // 격려 메시지 업데이트
-            updateEncouragement(stats);
-        }
-
-        // 일별 데이터 집계
-        function aggregateDailyData(records) {
-            const dailyData = {};
-            
-            records.forEach(record => {
-                const date = new Date(record.timestamp).toISOString().split('T')[0];
-                
-                if (!dailyData[date]) {
-                    dailyData[date] = {
-                        date: date,
-                        checkIn: null,
-                        checkOut: null,
-                        studyTime: 0,
-                        records: []
-                    };
-                }
-                
-                dailyData[date].records.push(record);
-                
-                if (record.status === '입실') {
-                    const checkTime = new Date(record.timestamp);
-                    if (!dailyData[date].checkIn || checkTime < new Date(dailyData[date].checkIn.timestamp)) {
-                        dailyData[date].checkIn = record;
-                    }
-                } else if (record.status === '퇴실') {
-                    const checkTime = new Date(record.timestamp);
-                    if (!dailyData[date].checkOut || checkTime > new Date(dailyData[date].checkOut.timestamp)) {
-                        dailyData[date].checkOut = record;
-                    }
-                }
-            });
-            
-            // 학습시간 계산
-            Object.values(dailyData).forEach(day => {
-                if (day.checkIn && day.checkOut) {
-                    const startTime = new Date(day.checkIn.timestamp);
-                    const endTime = new Date(day.checkOut.timestamp);
-                    day.studyTime = Math.round((endTime - startTime) / (1000 * 60)); // 분 단위
-                }
-            });
-            
-            return Object.values(dailyData).sort((a, b) => new Date(b.date) - new Date(a.date));
-        }
-
-        // 학생 통계 계산
-        function calculateStudentStats(dailyData) {
-            const totalDays = dailyData.length;
-            const completedDays = dailyData.filter(day => day.checkIn && day.checkOut).length;
-            const totalStudyTime = dailyData.reduce((sum, day) => sum + day.studyTime, 0);
-            const avgStudyTime = totalDays > 0 ? Math.round(totalStudyTime / totalDays) : 0;
-            const attendanceRate = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
-            
-            // 연속 출석일 계산
-            let consecutiveDays = 0;
-            for (let i = 0; i < dailyData.length; i++) {
-                if (dailyData[i].checkIn && dailyData[i].checkOut) {
-                    consecutiveDays++;
-                } else {
-                    break;
-                }
-            }
-            
-            return {
-                totalDays,
-                completedDays,
-                totalStudyTime,
-                avgStudyTime,
-                attendanceRate,
-                consecutiveDays
-            };
-        }
-
-        // 통계 표시 업데이트
-        function updateStatsDisplay(stats) {
-            document.getElementById('total-days').textContent = stats.totalDays;
-            document.getElementById('total-study-time').textContent = stats.totalStudyTime;
-            document.getElementById('avg-study-time').textContent = stats.avgStudyTime;
-            document.getElementById('attendance-rate').textContent = stats.attendanceRate;
-        }
-
-        // 성취 배지 업데이트
-        function updateAchievements(stats) {
-            const badges = [];
-            
-            // 출석일 배지
-            if (stats.totalDays >= 30) badges.push({icon: 'fa-calendar-check', color: 'bg-blue-500', title: '30일 출석', desc: '꾸준함의 달인'});
-            else if (stats.totalDays >= 14) badges.push({icon: 'fa-calendar-plus', color: 'bg-blue-400', title: '2주 출석', desc: '좋은 시작'});
-            else if (stats.totalDays >= 7) badges.push({icon: 'fa-calendar', color: 'bg-blue-300', title: '1주 출석', desc: '첫걸음'});
-            
-            // 학습시간 배지
-            if (stats.totalStudyTime >= 1000) badges.push({icon: 'fa-clock', color: 'bg-green-500', title: '1000분 달성', desc: '시간의 마법사'});
-            else if (stats.totalStudyTime >= 500) badges.push({icon: 'fa-hourglass-half', color: 'bg-green-400', title: '500분 달성', desc: '열정의 증명'});
-            
-            // 출석률 배지
-            if (stats.attendanceRate >= 95) badges.push({icon: 'fa-star', color: 'bg-yellow-500', title: '완벽 출석', desc: '95% 이상'});
-            else if (stats.attendanceRate >= 80) badges.push({icon: 'fa-thumbs-up', color: 'bg-yellow-400', title: '우수 출석', desc: '80% 이상'});
-            
-            // 연속 출석 배지
-            if (stats.consecutiveDays >= 10) badges.push({icon: 'fa-fire', color: 'bg-red-500', title: '연속 출석', desc: `${stats.consecutiveDays}일 연속`});
-            
-            const badgeContainer = document.getElementById('badge-container');
-            if (badges.length === 0) {
-                badgeContainer.innerHTML = `
-                    <div class="col-span-full text-center py-8 text-gray-500">
-                        <i class="fas fa-trophy text-gray-300 text-3xl mb-2"></i>
-                        <p>더 많은 출석으로 배지를 획득하세요!</p>
-                    </div>
-                `;
+        function login() {
+            const password = document.getElementById('password').value;
+            if (password === 'jj2024' || password === '광영여고2024' || password === 'admin123') {
+                document.getElementById('login').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                updateStats();
+                showAll();
+                setInterval(updateTime, 1000);
+                updateTime();
+                console.log('로그인 성공 - JJ 선생님 관리자 시스템');
             } else {
-                badgeContainer.innerHTML = badges.map(badge => `
-                    <div class="text-center p-4 bg-white rounded-lg achievement-badge">
-                        <div class="w-12 h-12 ${badge.color} rounded-full flex items-center justify-center mx-auto mb-2">
-                            <i class="fas ${badge.icon} text-white text-lg"></i>
-                        </div>
-                        <h4 class="font-semibold text-gray-900 text-sm">${badge.title}</h4>
-                        <p class="text-xs text-gray-700">${badge.desc}</p>
-                    </div>
-                `).join('');
+                alert('올바르지 않은 비밀번호입니다.');
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
             }
         }
 
-        // 차트 업데이트
-        function updateCharts(dailyData) {
-            // 주간 차트
-            const last7Days = dailyData.slice(0, 7).reverse();
-            updateWeeklyChart(last7Days);
-            
-            // 월별 차트
-            updateMonthlyChart(dailyData);
-        }
-
-        // 주간 차트 업데이트
-        function updateWeeklyChart(weekData) {
-            const ctx = document.getElementById('weeklyChart').getContext('2d');
-            
-            if (weeklyChart) {
-                weeklyChart.destroy();
+        function logout() {
+            if (confirm('로그아웃하시겠습니까?')) {
+                document.getElementById('login').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+                document.getElementById('password').value = '';
             }
-            
-            weeklyChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: weekData.map(day => {
-                        const date = new Date(day.date);
-                        return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-                    }),
-                    datasets: [{
-                        label: '학습시간 (분)',
-                        data: weekData.map(day => day.studyTime),
-                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
-                        borderColor: 'rgba(99, 102, 241, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
         }
 
-        // 월별 차트 업데이트
-        function updateMonthlyChart(dailyData) {
-            const ctx = document.getElementById('monthlyChart').getContext('2d');
+        function getData() {
+            return JSON.parse(localStorage.getItem('attendanceData') || '[]');
+        }
+
+        function getTodayData() {
+            const data = getData();
+            const today = new Date().toDateString();
+            return data.filter(record => new Date(record.timestamp).toDateString() === today);
+        }
+
+        function updateStats() {
+            const todayData = getTodayData();
+            const students = {};
             
-            if (monthlyChart) {
-                monthlyChart.destroy();
+            todayData.forEach(record => {
+                if (!students[record.studentId]) {
+                    students[record.studentId] = { checkIn: false, checkOut: false };
+                }
+                if (record.status === '입실') students[record.studentId].checkIn = true;
+                if (record.status === '퇴실') students[record.studentId].checkOut = true;
+            });
+
+            const totalStudents = Object.keys(students).length;
+            const completed = Object.values(students).filter(s => s.checkIn && s.checkOut).length;
+            const ongoing = Object.values(students).filter(s => s.checkIn && !s.checkOut).length;
+            const missing = Object.values(students).filter(s => !s.checkIn).length;
+
+            document.getElementById('total-students').textContent = totalStudents;
+            document.getElementById('completed').textContent = completed;
+            document.getElementById('ongoing').textContent = ongoing;
+            document.getElementById('missing').textContent = missing;
+        }
+
+        function showAll() {
+            currentView = 'all';
+            const data = getData();
+            const container = document.getElementById('data-list');
+            
+            document.getElementById('record-count').textContent = '총 ' + data.length + '개 기록';
+            
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i><p class="font-medium">등록된 데이터가 없습니다</p><p class="text-sm mt-1">학생들이 출결을 입력하면 여기에 표시됩니다</p></div>';
+                return;
             }
+
+            const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
-            // 월별 데이터 집계
-            const monthlyData = {};
-            dailyData.forEach(day => {
-                const monthKey = day.date.substring(0, 7); // YYYY-MM
-                if (!monthlyData[monthKey]) {
-                    monthlyData[monthKey] = 0;
-                }
-                monthlyData[monthKey] += day.studyTime;
-            });
-            
-            const months = Object.keys(monthlyData).sort();
-            
-            monthlyChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: months.map(month => {
-                        const date = new Date(month + '-01');
-                        return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'short' });
-                    }),
-                    datasets: [{
-                        label: '월별 누적 학습시간 (분)',
-                        data: months.map(month => monthlyData[month]),
-                        backgroundColor: 'rgba(147, 51, 234, 0.1)',
-                        borderColor: 'rgba(147, 51, 234, 1)',
-                        borderWidth: 3,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
+            container.innerHTML = sortedData.map((record, index) => 
+                '<div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">' +
+                '<div class="flex items-center space-x-3">' +
+                '<div class="w-8 h-8 ' + (record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600') + ' rounded-full flex items-center justify-center">' +
+                '<i class="fas ' + (record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt') + ' text-xs"></i>' +
+                '</div>' +
+                '<div>' +
+                '<div class="font-medium">' + record.studentName + ' (' + record.studentId + ')</div>' +
+                '<div class="text-sm text-gray-500">' + record.status + ' • ' + new Date(record.timestamp).toLocaleString('ko-KR') + '</div>' +
+                '</div>' +
+                '</div>' +
+                '<button onclick="deleteRecord(' + index + ')" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">' +
+                '<i class="fas fa-trash"></i>' +
+                '</button>' +
+                '</div>'
+            ).join('');
         }
 
-        // 최근 기록 업데이트
-        function updateRecentRecords(dailyData) {
-            const recentRecords = dailyData.slice(0, 10); // 최근 10일
-            const tbody = document.getElementById('recent-records');
+        function showToday() {
+            currentView = 'today';
+            const todayData = getTodayData();
+            const allData = getData();
+            const container = document.getElementById('data-list');
             
-            tbody.innerHTML = recentRecords.map(day => {
-                const checkInTime = day.checkIn ? new Date(day.checkIn.timestamp).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) : '-';
-                const checkOutTime = day.checkOut ? new Date(day.checkOut.timestamp).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) : '-';
-                const studyTimeText = day.studyTime > 0 ? `${day.studyTime}분` : '-';
-                
-                let status = '';
-                let statusClass = '';
-                if (day.checkIn && day.checkOut) {
-                    status = '완료';
-                    statusClass = 'bg-green-100 text-green-800';
-                } else if (day.checkIn && !day.checkOut) {
-                    status = '퇴실 누락';
-                    statusClass = 'bg-yellow-100 text-yellow-800';
-                } else {
-                    status = '입실 누락';
-                    statusClass = 'bg-red-100 text-red-800';
-                }
-                
-                return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm text-gray-900">${new Date(day.date).toLocaleDateString('ko-KR')}</td>
-                        <td class="px-4 py-3 text-sm text-gray-900">${checkInTime}</td>
-                        <td class="px-4 py-3 text-sm text-gray-900">${checkOutTime}</td>
-                        <td class="px-4 py-3 text-sm text-gray-900">${studyTimeText}</td>
-                        <td class="px-4 py-3">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
-                                ${status}
-                            </span>
-                        </td>
-                    </tr>
-                `;
+            document.getElementById('record-count').textContent = '오늘 ' + todayData.length + '개 기록';
+            
+            if (todayData.length === 0) {
+                container.innerHTML = '<div class="text-center py-12 text-gray-500"><i class="fas fa-calendar-day text-4xl mb-3 text-gray-300"></i><p class="font-medium">오늘 등록된 데이터가 없습니다</p></div>';
+                return;
+            }
+
+            const sortedData = todayData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = sortedData.map(record => {
+                const index = allData.indexOf(record);
+                return '<div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">' +
+                '<div class="flex items-center space-x-3">' +
+                '<div class="w-8 h-8 ' + (record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600') + ' rounded-full flex items-center justify-center">' +
+                '<i class="fas ' + (record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt') + ' text-xs"></i>' +
+                '</div>' +
+                '<div>' +
+                '<div class="font-medium">' + record.studentName + ' (' + record.studentId + ')</div>' +
+                '<div class="text-sm text-gray-500">' + record.status + ' • ' + new Date(record.timestamp).toLocaleTimeString('ko-KR') + '</div>' +
+                '</div>' +
+                '</div>' +
+                '<button onclick="deleteRecord(' + index + ')" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">' +
+                '<i class="fas fa-trash"></i>' +
+                '</button>' +
+                '</div>';
             }).join('');
         }
 
-        // 격려 메시지 업데이트
-        function updateEncouragement(stats) {
-            let encouragementText = '';
-            let nextGoal = '';
+        function showByStudent() {
+            currentView = 'student';
+            const data = getData();
+            const students = {};
             
-            if (stats.attendanceRate >= 95) {
-                encouragementText = '완벽한 출석률이에요! 정말 대단해요! 🏆';
-                nextGoal = '이 멋진 기록을 계속 유지해보세요!';
-            } else if (stats.attendanceRate >= 80) {
-                encouragementText = '우수한 출석률을 보여주고 있어요! 👏';
-                nextGoal = `95% 달성까지 조금만 더 화이팅!`;
-            } else if (stats.totalDays >= 7) {
-                encouragementText = '꾸준히 노력하고 있는 모습이 보기 좋아요! 💪';
-                nextGoal = '80% 출석률을 목표로 해보세요!';
-            } else {
-                encouragementText = '아침자습의 시작, 좋은 선택이에요! ✨';
-                nextGoal = '1주일 연속 출석을 목표로 해보세요!';
+            data.forEach(record => {
+                if (!students[record.studentId]) {
+                    students[record.studentId] = {
+                        name: record.studentName,
+                        records: []
+                    };
+                }
+                students[record.studentId].records.push(record);
+            });
+
+            const container = document.getElementById('data-list');
+            const studentCount = Object.keys(students).length;
+            
+            document.getElementById('record-count').textContent = studentCount + '명의 학생 기록';
+            
+            if (studentCount === 0) {
+                container.innerHTML = '<div class="text-center py-12 text-gray-500"><i class="fas fa-users text-4xl mb-3 text-gray-300"></i><p class="font-medium">등록된 학생이 없습니다</p></div>';
+                return;
             }
-            
-            document.getElementById('encouragement-text').textContent = encouragementText;
-            document.getElementById('next-goal').textContent = nextGoal;
+
+            container.innerHTML = Object.entries(students).map(([studentId, data]) => 
+                '<div class="border rounded-lg p-4 bg-gray-50">' +
+                '<div class="flex justify-between items-center mb-2">' +
+                '<h4 class="font-semibold text-gray-900">' + data.name + ' (' + studentId + ')</h4>' +
+                '<div class="flex items-center space-x-2">' +
+                '<span class="text-sm text-gray-500 bg-white px-2 py-1 rounded">' + data.records.length + '개 기록</span>' +
+                '<button onclick="deleteStudent(\'' + studentId + '\')" class="text-red-500 hover:text-red-700 text-sm bg-white px-2 py-1 rounded hover:bg-red-50 transition-colors">' +
+                '<i class="fas fa-trash mr-1"></i>전체삭제' +
+                '</button>' +
+                '</div>' +
+                '</div>' +
+                '<div class="space-y-1 max-h-32 overflow-y-auto">' +
+                data.records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(record => {
+                    const allData = getData();
+                    const index = allData.indexOf(record);
+                    return '<div class="flex justify-between items-center text-sm p-2 bg-white rounded border">' +
+                    '<span class="flex items-center">' +
+                    '<div class="w-4 h-4 ' + (record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600') + ' rounded-full flex items-center justify-center mr-2">' +
+                    '<i class="fas ' + (record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt') + ' text-xs"></i>' +
+                    '</div>' +
+                    record.status + ' • ' + new Date(record.timestamp).toLocaleString('ko-KR') +
+                    '</span>' +
+                    '<button onclick="deleteRecord(' + index + ')" class="text-red-500 hover:text-red-700 px-1 py-1 rounded hover:bg-red-50 transition-colors">' +
+                    '<i class="fas fa-times text-xs"></i>' +
+                    '</button>' +
+                    '</div>';
+                }).join('') +
+                '</div>' +
+                '</div>'
+            ).join('');
         }
 
-        // 결과 공유 (스크린샷)
-        function shareResults() {
-            if (html2canvas) {
-                html2canvas(document.getElementById('student-stats')).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `${currentStudentId}_학습현황.png`;
-                    link.href = canvas.toDataURL();
-                    link.click();
-                });
-            } else {
-                alert('스크린샷 기능을 사용하려면 추가 라이브러리가 필요합니다.\n현재는 브라우저의 스크린샷 기능을 사용해주세요.');
+        function deleteRecord(index) {
+            if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+            
+            const data = getData();
+            const deletedRecord = data[index];
+            data.splice(index, 1);
+            localStorage.setItem('attendanceData', JSON.stringify(data));
+            
+            if (currentView === 'all') showAll();
+            else if (currentView === 'today') showToday();
+            else if (currentView === 'student') showByStudent();
+            
+            updateStats();
+            alert(deletedRecord.studentName + '의 ' + deletedRecord.status + ' 기록이 삭제되었습니다!');
+        }
+
+        function deleteStudent(studentId) {
+            const data = getData();
+            const studentRecord = data.find(r => r.studentId === studentId);
+            const studentName = studentRecord ? studentRecord.studentName : '학생';
+            
+            const confirmName = prompt('정말로 ' + studentName + '의 모든 데이터를 삭제하시겠습니까? 확인을 위해 학생 이름을 입력하세요:');
+            if (!confirmName || confirmName !== studentName) {
+                if (confirmName) alert('학생 이름이 일치하지 않습니다.');
+                return;
+            }
+            
+            const filteredData = data.filter(record => record.studentId !== studentId);
+            localStorage.setItem('attendanceData', JSON.stringify(filteredData));
+            
+            showByStudent();
+            updateStats();
+            alert(studentName + ' 학생의 모든 데이터가 삭제되었습니다!');
+        }
+
+        function deleteToday() {
+            const todayCount = getTodayData().length;
+            if (todayCount === 0) {
+                alert('오늘 삭제할 데이터가 없습니다.');
+                return;
+            }
+            
+            if (!confirm('오늘의 모든 출결 데이터 ' + todayCount + '개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다!')) return;
+            
+            const allData = getData();
+            const today = new Date().toDateString();
+            const filteredData = allData.filter(record => 
+                new Date(record.timestamp).toDateString() !== today
+            );
+            
+            localStorage.setItem('attendanceData', JSON.stringify(filteredData));
+            
+            if (currentView === 'all') showAll();
+            else if (currentView === 'today') showToday();
+            else if (currentView === 'student') showByStudent();
+            
+            updateStats();
+            alert('오늘 데이터 ' + todayCount + '개가 삭제되었습니다!');
+        }
+
+        function deleteAll() {
+            const totalCount = getData().length;
+            if (totalCount === 0) {
+                alert('삭제할 데이터가 없습니다.');
+                return;
+            }
+            
+            const confirmation = prompt('정말로 모든 데이터 ' + totalCount + '개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다! 확인하려면 "모든데이터삭제"를 정확히 입력하세요:');
+            
+            if (confirmation !== '모든데이터삭제') {
+                if (confirmation) alert('입력이 정확하지 않습니다. 취소되었습니다.');
+                return;
+            }
+            
+            localStorage.removeItem('attendanceData');
+            
+            if (currentView === 'all') showAll();
+            else if (currentView === 'today') showToday();
+            else if (currentView === 'student') showByStudent();
+            
+            updateStats();
+            alert('모든 데이터 ' + totalCount + '개가 삭제되었습니다!');
+        }
+
+        function exportData() {
+            const data = getData();
+            
+            if (data.length === 0) {
+                alert('내보낼 데이터가 없습니다.');
+                return;
+            }
+
+            const csvContent = [
+                ['학번', '이름', '상태', '시간', '날짜', '자동처리'].join(','),
+                ...data.map(record => [
+                    record.studentId,
+                    record.studentName,
+                    record.status,
+                    new Date(record.timestamp).toLocaleTimeString('ko-KR'),
+                    new Date(record.timestamp).toLocaleDateString('ko-KR'),
+                    record.processed ? '자동' : '수동'
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = '광영여고_출결데이터_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+            
+            alert('CSV 파일이 다운로드되었습니다! (' + data.length + '개 기록)');
+        }
+
+        function viewStatus() {
+            window.open('status.html', '_blank');
+        }
+
+        // ========== Google Apps Script v8 연동 기능 ==========
+
+        async function checkConnection() {
+            const statusElement = document.getElementById('connection-status');
+            statusElement.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span class="text-sm">연결 상태 확인 중...</span>';
+            
+            try {
+                // api.js의 attendanceAPI가 로드되어 있는지 확인
+                if (typeof window.attendanceAPI === 'undefined') {
+                    // API 로드 시도
+                    const script = document.createElement('script');
+                    script.src = 'js/api.js';
+                    script.onload = () => {
+                        setTimeout(checkConnection, 500); // API 로드 후 다시 확인
+                    };
+                    document.head.appendChild(script);
+                    return;
+                }
+
+                const status = await window.attendanceAPI.checkConnection();
+                
+                if (status.connected === true) {
+                    statusElement.innerHTML = `
+                        <i class="fas fa-check-circle mr-2 text-green-300"></i>
+                        <span class="text-sm">✅ 구글 스프레드시트 v8 연결됨</span>
+                    `;
+                } else if (status.connected === 'unknown') {
+                    statusElement.innerHTML = `
+                        <i class="fas fa-wifi mr-2 text-yellow-300"></i>
+                        <span class="text-sm">🔄 하이브리드 모드 (로컬+구글)</span>
+                    `;
+                } else {
+                    statusElement.innerHTML = `
+                        <i class="fas fa-exclamation-triangle mr-2 text-orange-300"></i>
+                        <span class="text-sm">⚠️ 오프라인 모드 (로컬 전용)</span>
+                    `;
+                }
+                
+                console.log('🔗 Google Apps Script 연결 상태:', status);
+                
+            } catch (error) {
+                console.error('연결 상태 확인 실패:', error);
+                statusElement.innerHTML = `
+                    <i class="fas fa-times-circle mr-2 text-red-300"></i>
+                    <span class="text-sm">❌ 연결 확인 실패</span>
+                `;
             }
         }
 
-        // Enter 키로 검색
-        document.getElementById('student-search').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchStudent();
-            }
-        });
+        async function openIntegrationGuide() {
+            // 연동 가이드 페이지 열기
+            window.open('./integration-guide.html', '_blank');
+        }
 
-        // 학번 입력 시 숫자만 허용
-        document.getElementById('student-search').addEventListener('input', function(e) {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '');
-        });
+        async function syncWithGoogleSheets() {
+            if (typeof window.attendanceAPI === 'undefined') {
+                alert('⚠️ API가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>동기화 중...';
+            button.disabled = true;
+
+            try {
+                const result = await window.attendanceAPI.syncWithGoogleSheets();
+                
+                if (result.success) {
+                    alert(`✅ ${result.message}\n\n동기화된 데이터: ${result.syncedCount || 0}건`);
+                    
+                    // 통계 업데이트
+                    updateStats();
+                } else {
+                    alert(`❌ ${result.message}`);
+                }
+                
+            } catch (error) {
+                console.error('동기화 실패:', error);
+                alert('❌ 동기화 중 오류가 발생했습니다.');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        async function triggerAutomation() {
+            if (typeof window.attendanceAPI === 'undefined') {
+                alert('⚠️ API가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>실행 중...';
+            button.disabled = true;
+
+            try {
+                const result = await window.attendanceAPI.triggerAutomation('processMissing');
+                
+                if (result.success) {
+                    alert(`🤖 ${result.message}\n\n${result.note || 'Google Apps Script에서 자동화 처리가 시작되었습니다.'}`);
+                } else {
+                    alert(`❌ ${result.message}`);
+                }
+                
+            } catch (error) {
+                console.error('자동화 실행 실패:', error);
+                alert('❌ 자동화 실행 중 오류가 발생했습니다.');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        function openSpreadsheet() {
+            // JJ 선생님의 구글 스프레드시트 직접 열기
+            const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dJEOyc59eZgwidKjXiYptgreAIabfBbkndN0g17Qsb8/edit';
+            window.open(spreadsheetUrl, '_blank');
+        }
+
+        // ========== 시스템 초기화 ==========
+
+        window.onload = function() {
+            console.log('🎓 JJ 선생님 관리자 시스템 v9.0 로드 완료');
+            console.log('🔗 Google Apps Script v8 연동 지원');
+            document.getElementById('password').focus();
+            
+            // 연결 상태 자동 확인
+            setTimeout(checkConnection, 1000);
+            
+            // 주기적으로 연결 상태 확인 (5분마다)
+            setInterval(checkConnection, 300000);
+        };
     </script>
 </body>
 </html>
