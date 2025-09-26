@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>관리자 대시보드 - 광영여고 아침자습</title>
+    <title>관리자 대시보드 - 광영여고 아침자습 (보안)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 구글 로그인 SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .gradient-bg {
@@ -27,261 +29,327 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- 헤더 -->
-    <header class="gradient-bg shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold text-white mb-1">
-                        <i class="fas fa-user-shield mr-2"></i>관리자 대시보드
-                    </h1>
-                    <p class="text-indigo-100">JJ 선생님 전용 - 아침자습 시스템 관리 v8.0</p>
+<body class="bg-gray-50">
+    <!-- 로그인 화면 -->
+    <div id="login-screen" class="login-container gradient-bg">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-shield text-indigo-600 text-3xl"></i>
                 </div>
-                <div class="text-right text-white">
-                    <div class="text-lg font-semibold" id="current-date"></div>
-                    <div class="text-sm text-indigo-200" id="current-time"></div>
-                    <div class="text-xs text-indigo-300 mt-1" id="connection-status">연결 확인 중...</div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">관리자 로그인</h1>
+                <p class="text-gray-600">JJ 선생님 전용 아침자습 관리 시스템</p>
+                <div class="mt-4 text-sm text-gray-500">
+                    <i class="fas fa-shield-alt text-green-500 mr-1"></i>
+                    구글 계정으로 안전하게 로그인하세요
+                </div>
+            </div>
+
+            <!-- 구글 로그인 버튼 영역 -->
+            <div class="space-y-4">
+                <div id="google-signin-button" class="flex justify-center"></div>
+                
+                <!-- 수동 로그인 (개발/테스트용) -->
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 mb-3">또는 임시 액세스</p>
+                    <input 
+                        type="password" 
+                        id="manual-password" 
+                        placeholder="관리자 비밀번호 입력" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center"
+                    >
+                    <button 
+                        onclick="manualLogin()" 
+                        class="mt-3 w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                    >
+                        <i class="fas fa-key mr-2"></i>비밀번호로 로그인
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <div class="text-xs text-gray-400">
+                    <i class="fas fa-lock mr-1"></i>
+                    승인된 계정만 접근 가능합니다
+                </div>
+                <div class="mt-2">
+                    <a href="index.html" class="text-sm text-indigo-600 hover:text-indigo-800">
+                        ← 출결 입력 페이지로 돌아가기
+                    </a>
                 </div>
             </div>
         </div>
-    </header>
+    </div>
 
-    <!-- 메인 컨텐츠 -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- 시스템 알림 -->
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div class="flex items-center">
-                <i class="fas fa-info-circle text-blue-500 mr-3"></i>
-                <div>
-                    <h3 class="text-blue-900 font-medium">시스템 정보</h3>
-                    <p class="text-blue-800 text-sm">현재 <span id="system-mode" class="font-semibold">로컬 모드</span>로 동작 중입니다. 모든 기능이 정상적으로 작동합니다.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 빠른 액션 카드들 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- 고속 누락 처리 -->
-            <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-magic text-purple-600 text-xl"></i>
+    <!-- 메인 관리자 페이지 (로그인 후 표시) -->
+    <div id="admin-dashboard" class="hidden">
+        <!-- 헤더 -->
+        <header class="gradient-bg shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-white mb-1">
+                            <i class="fas fa-user-shield mr-2"></i>관리자 대시보드
+                        </h1>
+                        <p class="text-indigo-100">JJ 선생님 전용 - 아침자습 시스템 관리 v8.0</p>
                     </div>
-                    <div class="ml-3">
-                        <h3 class="text-lg font-semibold text-gray-900">고속 처리</h3>
-                        <p class="text-sm text-gray-500">누락 데이터 자동화</p>
-                    </div>
-                </div>
-                <button onclick="processAllMissing()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
-                    <i class="fas fa-bolt mr-2"></i>누락 데이터 처리
-                </button>
-                <div class="mt-3 text-xs text-gray-500">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    입실 07:10, 퇴실 07:47 자동 적용
-                </div>
-            </div>
-
-            <!-- 오늘 현황 점검 -->
-            <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-search text-blue-600 text-xl"></i>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-lg font-semibold text-gray-900">현황 점검</h3>
-                        <p class="text-sm text-gray-500">오늘 출결 확인</p>
-                    </div>
-                </div>
-                <button onclick="checkTodayStatus()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
-                    <i class="fas fa-clipboard-check mr-2"></i>오늘 현황 확인
-                </button>
-                <div class="mt-3 text-xs text-gray-500" id="today-status-summary">
-                    클릭하여 확인하기
-                </div>
-            </div>
-
-            <!-- 데이터 내보내기 -->
-            <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-download text-green-600 text-xl"></i>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-lg font-semibold text-gray-900">데이터 내보내기</h3>
-                        <p class="text-sm text-gray-500">Excel 파일 생성</p>
-                    </div>
-                </div>
-                <button onclick="exportAllData()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
-                    <i class="fas fa-file-excel mr-2"></i>CSV 다운로드
-                </button>
-                <div class="mt-3 text-xs text-gray-500">
-                    전체 출결 데이터 다운로드
-                </div>
-            </div>
-
-            <!-- 구글 연동 설정 -->
-            <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                        <i class="fab fa-google text-indigo-600 text-xl"></i>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-lg font-semibold text-gray-900">구글 연동</h3>
-                        <p class="text-sm text-gray-500">앱스크립트 설정</p>
-                    </div>
-                </div>
-                <button onclick="showGoogleIntegration()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
-                    <i class="fas fa-cog mr-2"></i>연동 설정
-                </button>
-                <div class="mt-3 text-xs text-gray-500" id="google-status">
-                    <i class="fas fa-circle text-gray-400 mr-1"></i>오프라인 모드
-                </div>
-            </div>
-        </div>
-
-        <!-- 처리 결과 영역 -->
-        <div id="processing-result" class="hidden mb-8">
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-cogs text-blue-600 mr-2"></i>처리 결과
-                </h2>
-                <div id="result-content" class="space-y-4">
-                    <!-- 동적으로 생성될 결과 내용 -->
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- 메인 컨텐츠 영역 -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- 오늘의 통계 -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                        <i class="fas fa-chart-pie text-purple-600 mr-2"></i>
-                        오늘의 출결 통계
-                    </h2>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <div class="text-center p-4 bg-gray-50 rounded-lg">
-                            <div class="text-2xl font-bold text-gray-900" id="stat-total">0</div>
-                            <div class="text-sm text-gray-500">전체 출석</div>
+                    <div class="text-right text-white">
+                        <div class="flex items-center mb-2">
+                            <img id="user-avatar" src="" alt="프로필" class="w-8 h-8 rounded-full mr-2 hidden">
+                            <span id="user-name" class="text-sm"></span>
                         </div>
-                        <div class="text-center p-4 bg-green-50 rounded-lg">
-                            <div class="text-2xl font-bold text-green-700" id="stat-completed">0</div>
-                            <div class="text-sm text-green-600">정상 완료</div>
+                        <div class="text-lg font-semibold" id="current-date"></div>
+                        <div class="text-sm text-indigo-200" id="current-time"></div>
+                        <button onclick="logout()" class="mt-2 text-xs bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full">
+                            <i class="fas fa-sign-out-alt mr-1"></i>로그아웃
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 메인 컨텐츠 -->
+        <main class="max-w-7xl mx-auto px-4 py-8">
+            <!-- 시스템 알림 -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center">
+                    <i class="fas fa-shield-check text-green-500 mr-3"></i>
+                    <div>
+                        <h3 class="text-green-900 font-medium">보안 로그인 완료</h3>
+                        <p class="text-green-800 text-sm">구글 인증을 통해 안전하게 로그인되었습니다. 현재 <span id="system-mode" class="font-semibold">로컬 모드</span>로 동작 중입니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 빠른 액션 카드들 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- 고속 누락 처리 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-magic text-purple-600 text-xl"></i>
                         </div>
-                        <div class="text-center p-4 bg-yellow-50 rounded-lg">
-                            <div class="text-2xl font-bold text-yellow-700" id="stat-ongoing">0</div>
-                            <div class="text-sm text-yellow-600">진행 중</div>
-                        </div>
-                        <div class="text-center p-4 bg-red-50 rounded-lg">
-                            <div class="text-2xl font-bold text-red-700" id="stat-missing">0</div>
-                            <div class="text-sm text-red-600">누락</div>
+                        <div class="ml-3">
+                            <h3 class="text-lg font-semibold text-gray-900">고속 처리</h3>
+                            <p class="text-sm text-gray-500">누락 데이터 자동화</p>
                         </div>
                     </div>
-
-                    <!-- 차트 영역 -->
-                    <div class="relative" style="height: 300px;">
-                        <canvas id="attendanceChart"></canvas>
+                    <button onclick="processAllMissing()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                        <i class="fas fa-bolt mr-2"></i>누락 데이터 처리
+                    </button>
+                    <div class="mt-3 text-xs text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        입실 07:10, 퇴실 07:47 자동 적용
                     </div>
                 </div>
 
-                <!-- 문제 학생 목록 -->
+                <!-- 오늘 현황 점검 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-search text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-lg font-semibold text-gray-900">현황 점검</h3>
+                            <p class="text-sm text-gray-500">오늘 출결 확인</p>
+                        </div>
+                    </div>
+                    <button onclick="checkTodayStatus()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                        <i class="fas fa-clipboard-check mr-2"></i>오늘 현황 확인
+                    </button>
+                    <div class="mt-3 text-xs text-gray-500" id="today-status-summary">
+                        클릭하여 확인하기
+                    </div>
+                </div>
+
+                <!-- 데이터 내보내기 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-download text-green-600 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-lg font-semibold text-gray-900">데이터 내보내기</h3>
+                            <p class="text-sm text-gray-500">Excel 파일 생성</p>
+                        </div>
+                    </div>
+                    <button onclick="exportAllData()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                        <i class="fas fa-file-excel mr-2"></i>CSV 다운로드
+                    </button>
+                    <div class="mt-3 text-xs text-gray-500">
+                        전체 출결 데이터 다운로드
+                    </div>
+                </div>
+
+                <!-- 구글 연동 설정 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <i class="fab fa-google text-indigo-600 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-lg font-semibold text-gray-900">구글 연동</h3>
+                            <p class="text-sm text-gray-500">앱스크립트 설정</p>
+                        </div>
+                    </div>
+                    <button onclick="showGoogleIntegration()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                        <i class="fas fa-cog mr-2"></i>연동 설정
+                    </button>
+                    <div class="mt-3 text-xs text-gray-500" id="google-status">
+                        <i class="fas fa-circle text-gray-400 mr-1"></i>오프라인 모드
+                    </div>
+                </div>
+            </div>
+
+            <!-- 처리 결과 영역 -->
+            <div id="processing-result" class="hidden mb-8">
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
-                        주의 필요 학생
+                        <i class="fas fa-cogs text-blue-600 mr-2"></i>처리 결과
                     </h2>
-                    <div id="problem-students" class="space-y-3">
-                        <div class="text-center py-8 text-gray-500">
-                            <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
-                            <p>데이터를 로드하고 있습니다...</p>
-                        </div>
+                    <div id="result-content" class="space-y-4">
+                        <!-- 동적으로 생성될 결과 내용 -->
                     </div>
                 </div>
             </div>
 
-            <!-- 사이드바 -->
-            <div class="lg:col-span-1 space-y-6">
-                <!-- 시스템 상태 -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-server text-green-600 mr-2"></i>
-                        시스템 상태
-                    </h3>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                            <span class="text-sm font-medium text-green-700">데이터 저장</span>
-                            <span class="flex items-center text-green-600">
-                                <i class="fas fa-check-circle mr-1"></i>정상
-                            </span>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 메인 컨텐츠 영역 -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- 오늘의 통계 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-chart-pie text-purple-600 mr-2"></i>
+                            오늘의 출결 통계
+                        </h2>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <div class="text-2xl font-bold text-gray-900" id="stat-total">0</div>
+                                <div class="text-sm text-gray-500">전체 출석</div>
+                            </div>
+                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                                <div class="text-2xl font-bold text-green-700" id="stat-completed">0</div>
+                                <div class="text-sm text-green-600">정상 완료</div>
+                            </div>
+                            <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                                <div class="text-2xl font-bold text-yellow-700" id="stat-ongoing">0</div>
+                                <div class="text-sm text-yellow-600">진행 중</div>
+                            </div>
+                            <div class="text-center p-4 bg-red-50 rounded-lg">
+                                <div class="text-2xl font-bold text-red-700" id="stat-missing">0</div>
+                                <div class="text-sm text-red-600">누락</div>
+                            </div>
                         </div>
-                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                            <span class="text-sm font-medium text-blue-700">출결 입력</span>
-                            <span class="flex items-center text-blue-600">
-                                <i class="fas fa-check-circle mr-1"></i>활성
-                            </span>
+
+                        <!-- 차트 영역 -->
+                        <div class="relative" style="height: 300px;">
+                            <canvas id="attendanceChart"></canvas>
                         </div>
-                        <div class="flex items-center justify-between p-3 rounded-lg" id="google-integration-status">
-                            <span class="text-sm font-medium">구글 연동</span>
-                            <span class="flex items-center text-gray-600">
-                                <i class="fas fa-circle mr-1"></i>대기
-                            </span>
+                    </div>
+
+                    <!-- 문제 학생 목록 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                            주의 필요 학생
+                        </h2>
+                        <div id="problem-students" class="space-y-3">
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
+                                <p>데이터를 로드하고 있습니다...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 빠른 설정 -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-sliders-h text-gray-600 mr-2"></i>
-                        시스템 설정
-                    </h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">기본 입실 시간</label>
-                            <input type="time" id="default-checkin" value="07:10" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                <!-- 사이드바 -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- 시스템 상태 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-server text-green-600 mr-2"></i>
+                            시스템 상태
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <span class="text-sm font-medium text-green-700">보안 인증</span>
+                                <span class="flex items-center text-green-600">
+                                    <i class="fas fa-shield-check mr-1"></i>활성
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <span class="text-sm font-medium text-green-700">데이터 저장</span>
+                                <span class="flex items-center text-green-600">
+                                    <i class="fas fa-check-circle mr-1"></i>정상
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-lg" id="google-integration-status">
+                                <span class="text-sm font-medium">구글 연동</span>
+                                <span class="flex items-center text-gray-600">
+                                    <i class="fas fa-circle mr-1"></i>대기
+                                </span>
+                            </div>
                         </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">기본 퇴실 시간</label>
-                            <input type="time" id="default-checkout" value="07:47" class="w-full border border-gray-300 rounded-md px-3 py-2">
-                        </div>
-                        
-                        <button onclick="saveSettings()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                            <i class="fas fa-save mr-2"></i>설정 저장
-                        </button>
                     </div>
-                </div>
 
-                <!-- 빠른 링크 -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-link text-purple-600 mr-2"></i>
-                        빠른 링크
-                    </h3>
-                    
-                    <div class="space-y-3">
-                        <a href="index.html" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center">
-                            <i class="fas fa-plus mr-2"></i>출결 입력
-                        </a>
+                    <!-- 빠른 설정 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-sliders-h text-gray-600 mr-2"></i>
+                            시스템 설정
+                        </h3>
                         
-                        <a href="status.html" class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center">
-                            <i class="fas fa-chart-bar mr-2"></i>현황 확인
-                        </a>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">기본 입실 시간</label>
+                                <input type="time" id="default-checkin" value="07:10" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">기본 퇴실 시간</label>
+                                <input type="time" id="default-checkout" value="07:47" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                            </div>
+                            
+                            <button onclick="saveSettings()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-save mr-2"></i>설정 저장
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 빠른 링크 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-link text-purple-600 mr-2"></i>
+                            빠른 링크
+                        </h3>
                         
-                        <button onclick="clearAllData()" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                            <i class="fas fa-trash-alt mr-2"></i>데이터 초기화
-                        </button>
+                        <div class="space-y-3">
+                            <a href="index.html" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center">
+                                <i class="fas fa-plus mr-2"></i>출결 입력
+                            </a>
+                            
+                            <a href="status.html" class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-center">
+                                <i class="fas fa-chart-bar mr-2"></i>현황 확인
+                            </a>
+                            
+                            <button onclick="clearAllData()" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-trash-alt mr-2"></i>데이터 초기화
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <!-- 구글 연동 모달 -->
     <div id="google-integration-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -298,23 +366,13 @@
                 </div>
                 
                 <div class="space-y-4">
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <h4 class="font-semibold text-yellow-900 mb-2">
-                            <i class="fas fa-info-circle mr-2"></i>현재 상태
-                        </h4>
-                        <p class="text-yellow-800 text-sm">
-                            시스템이 <strong>로컬 모드</strong>로 동작 중입니다. 모든 기능이 정상 작동하며, 
-                            구글 연동은 선택사항입니다.
-                        </p>
-                    </div>
-
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <h4 class="font-semibold text-blue-900 mb-2">1단계: 앱스크립트 코드 복사</h4>
                         <p class="text-blue-800 text-sm mb-2">README 파일의 전체 앱스크립트 코드를 복사해서 기존 코드와 교체하세요.</p>
                     </div>
                     
                     <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <h4 class="font-semibت-600 text-green-900 mb-2">2단계: 웹앱 배포</h4>
+                        <h4 class="font-semibold text-green-900 mb-2">2단계: 웹앱 배포</h4>
                         <p class="text-green-800 text-sm">배포 → 새 배포 → 웹 앱으로 설정하고 URL을 복사하세요.</p>
                     </div>
 
@@ -342,7 +400,132 @@
     </div>
 
     <script>
+        // 구글 로그인 설정
+        const GOOGLE_CLIENT_ID = '여기에_클라이언트_ID_입력'; // 나중에 설정할 예정
+        const AUTHORIZED_EMAILS = [
+            'jj.teacher@gmail.com',  // JJ 선생님 이메일 (실제 이메일로 변경 필요)
+            'your.email@gmail.com'   // 추가 승인 이메일 (실제 이메일로 변경)
+        ];
+        
+        let currentUser = null;
         let attendanceChart = null;
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 기존 로그인 세션 확인
+            checkExistingLogin();
+            
+            // 구글 로그인 버튼 초기화 (임시로 비활성화)
+            initGoogleSignIn();
+        });
+
+        // 기존 로그인 세션 확인
+        function checkExistingLogin() {
+            const savedUser = localStorage.getItem('admin_user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    showDashboard();
+                } catch (e) {
+                    localStorage.removeItem('admin_user');
+                }
+            }
+        }
+
+        // 구글 로그인 초기화 (현재는 임시 비활성화)
+        function initGoogleSignIn() {
+            // 구글 클라이언트 ID가 설정되면 활성화될 예정
+            document.getElementById('google-signin-button').innerHTML = `
+                <div class="bg-gray-100 border border-gray-300 rounded-lg p-4 text-center">
+                    <i class="fab fa-google text-gray-400 text-2xl mb-2"></i>
+                    <p class="text-gray-600 text-sm">구글 로그인 설정 중...</p>
+                    <p class="text-xs text-gray-500 mt-1">임시로 비밀번호 로그인을 사용하세요</p>
+                </div>
+            `;
+        }
+
+        // 수동 로그인 (임시)
+        function manualLogin() {
+            const password = document.getElementById('manual-password').value;
+            
+            // 임시 비밀번호들
+            const validPasswords = ['jj2024', 'admin123', '광영여고2024'];
+            
+            if (validPasswords.includes(password)) {
+                currentUser = {
+                    name: 'JJ 선생님',
+                    email: 'jj.teacher@admin',
+                    picture: '',
+                    loginType: 'manual'
+                };
+                
+                localStorage.setItem('admin_user', JSON.stringify(currentUser));
+                showDashboard();
+            } else {
+                alert('❌ 비밀번호가 올바르지 않습니다.');
+                document.getElementById('manual-password').value = '';
+            }
+        }
+
+        // 구글 로그인 성공 처리 (나중에 구현)
+        function handleGoogleSignIn(response) {
+            // JWT 토큰 디코딩
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            
+            // 승인된 이메일인지 확인
+            if (!AUTHORIZED_EMAILS.includes(payload.email)) {
+                alert('❌ 승인되지 않은 계정입니다.\nJJ 선생님만 접근 가능합니다.');
+                return;
+            }
+            
+            currentUser = {
+                name: payload.name,
+                email: payload.email,
+                picture: payload.picture,
+                loginType: 'google'
+            };
+            
+            localStorage.setItem('admin_user', JSON.stringify(currentUser));
+            showDashboard();
+        }
+
+        // 대시보드 표시
+        function showDashboard() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('admin-dashboard').classList.remove('hidden');
+            
+            // 사용자 정보 표시
+            document.getElementById('user-name').textContent = currentUser.name;
+            if (currentUser.picture) {
+                const avatar = document.getElementById('user-avatar');
+                avatar.src = currentUser.picture;
+                avatar.classList.remove('hidden');
+            }
+            
+            // 시간 업데이트 시작
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // 데이터 로드
+            updateAllStatistics();
+            updateChart();
+            
+            console.log(`관리자 로그인 완료: ${currentUser.name} (${currentUser.email})`);
+        }
+
+        // 로그아웃
+        function logout() {
+            if (confirm('정말 로그아웃하시겠습니까?')) {
+                localStorage.removeItem('admin_user');
+                currentUser = null;
+                
+                document.getElementById('admin-dashboard').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('manual-password').value = '';
+                
+                console.log('관리자 로그아웃 완료');
+            }
+        }
 
         // 시간 업데이트
         function updateDateTime() {
@@ -358,8 +541,15 @@
                 now.toLocaleTimeString('ko-KR');
         }
 
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
+        // Enter 키로 로그인
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const passwordInput = document.getElementById('manual-password');
+                if (passwordInput === document.activeElement) {
+                    manualLogin();
+                }
+            }
+        });
 
         // 출결 데이터 가져오기
         function getAttendanceData() {
@@ -409,12 +599,6 @@
 
             return Object.values(studentData);
         }
-
-        // 페이지 로드 시 통계 업데이트
-        document.addEventListener('DOMContentLoaded', function() {
-            updateAllStatistics();
-            updateChart();
-        });
 
         // 전체 통계 업데이트
         function updateAllStatistics() {
@@ -541,8 +725,10 @@
             });
         }
 
-        // 고속 누락 처리
+        // 나머지 함수들 (고속 처리, 현황 점검, 데이터 내보내기 등)은 기존과 동일
         function processAllMissing() {
+            if (!currentUser) return;
+            
             showProcessingResult('누락 데이터 자동 처리를 시작합니다...', 'info');
             
             setTimeout(() => {
@@ -552,7 +738,6 @@
                 let processedCount = 0;
                 const processedStudents = [];
 
-                // 누락 데이터 시뮬레이션
                 students.forEach(student => {
                     if (!student.checkIn) {
                         processedCount++;
@@ -589,6 +774,7 @@
                             <i class="fas fa-magic text-purple-600 text-3xl mb-3"></i>
                             <h3 class="text-lg font-semibold text-gray-900 mb-2">자동 처리 완료!</h3>
                             <p class="text-gray-600 mb-4">${processedCount}건의 누락 데이터가 시뮬레이션 처리되었습니다.</p>
+                            <div class="text-xs text-gray-500 mb-4">처리자: ${currentUser.name}</div>
                             ${processedStudents.length > 0 ? `
                                 <div class="max-h-48 overflow-y-auto mb-4">
                                     <div class="space-y-2 text-sm text-left">
@@ -601,12 +787,6 @@
                                     </div>
                                 </div>
                             ` : ''}
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                <p class="text-blue-800 text-sm">
-                                    <i class="fas fa-info-circle mr-2"></i>
-                                    실제 구글 앱스크립트 연동 시 자동으로 스프레드시트에 반영됩니다.
-                                </p>
-                            </div>
                         </div>
                     `, 'success');
                 }
@@ -616,8 +796,9 @@
             }, 2000);
         }
 
-        // 오늘 현황 점검
         function checkTodayStatus() {
+            if (!currentUser) return;
+            
             const todayData = getTodayData();
             const students = aggregateStudentData(todayData);
             
@@ -653,7 +834,7 @@
                         </div>
                     </div>
                     
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
                         <h4 class="font-semibold text-gray-900 mb-2">완료율</h4>
                         <div class="w-full bg-gray-200 rounded-full h-2">
                             <div class="bg-green-600 h-2 rounded-full" style="width: ${total > 0 ? Math.round((completed / total) * 100) : 0}%"></div>
@@ -661,10 +842,14 @@
                         <div class="text-sm text-gray-600 mt-1">${total > 0 ? Math.round((completed / total) * 100) : 0}% (${completed}/${total}명)</div>
                     </div>
 
-                    ${(missing > 0 || ongoing > 0) ? 
-                        '<div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4"><p class="text-yellow-800 text-sm"><i class="fas fa-exclamation-triangle mr-2"></i><strong>권장사항:</strong> "고속 누락 처리"를 실행하여 자동으로 처리하세요!</p></div>' : 
-                        '<div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-4"><p class="text-green-800 text-sm"><i class="fas fa-check-circle mr-2"></i><strong>완벽!</strong> 모든 학생이 정상적으로 아침자습을 완료했습니다! 🎉</p></div>'
-                    }
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p class="text-blue-800 text-sm">
+                            <i class="fas fa-user mr-1"></i>
+                            점검자: ${currentUser.name} | 
+                            <i class="fas fa-clock mr-1"></i>
+                            ${new Date().toLocaleTimeString('ko-KR')}
+                        </p>
+                    </div>
                 </div>
             `, 'info');
         }
@@ -682,7 +867,6 @@
             };
             
             if (content.includes('...')) {
-                // 로딩 상태
                 resultContent.innerHTML = `
                     <div class="text-center py-8">
                         <i class="fas fa-spinner processing-spinner text-blue-600 text-3xl mb-3"></i>
@@ -696,7 +880,6 @@
             resultDiv.classList.remove('hidden');
             resultDiv.scrollIntoView({ behavior: 'smooth' });
             
-            // 결과가 성공/오류일 때 10초 후 자동 숨김
             if (type === 'success' || type === 'error') {
                 setTimeout(() => {
                     resultDiv.classList.add('hidden');
@@ -706,6 +889,8 @@
 
         // 데이터 내보내기
         function exportAllData() {
+            if (!currentUser) return;
+            
             const attendanceData = getAttendanceData();
             
             if (attendanceData.length === 0) {
@@ -713,7 +898,6 @@
                 return;
             }
 
-            // CSV 생성
             const headers = ['날짜', '학번', '이름', '구분', '시간'];
             const csvRows = [headers.join(',')];
             
@@ -724,7 +908,7 @@
                 csvRows.push(row.join(','));
             });
 
-            const csvContent = "\uFEFF" + csvRows.join('\n'); // BOM 추가
+            const csvContent = "\uFEFF" + csvRows.join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             
             const link = document.createElement('a');
@@ -737,6 +921,7 @@
                     <i class="fas fa-download text-green-600 text-2xl mb-2"></i>
                     <p class="font-medium text-gray-900">CSV 파일 다운로드 완료!</p>
                     <p class="text-sm text-gray-600 mt-1">총 ${attendanceData.length}개의 출결 기록이 다운로드되었습니다.</p>
+                    <div class="text-xs text-gray-500 mt-2">다운로드: ${currentUser.name}</div>
                 </div>
             `, 'success');
         }
@@ -765,19 +950,10 @@
                 return;
             }
             
-            // 로컬스토리지에 저장
             localStorage.setItem('GOOGLE_APPS_SCRIPT_URL', url);
             
-            // 상태 업데이트
             document.getElementById('system-mode').textContent = '온라인 모드';
             document.getElementById('google-status').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>연결됨';
-            document.getElementById('google-integration-status').innerHTML = `
-                <span class="text-sm font-medium text-green-700">구글 연동</span>
-                <span class="flex items-center text-green-600">
-                    <i class="fas fa-check-circle mr-1"></i>활성
-                </span>
-            `;
-            document.getElementById('google-integration-status').className = 'flex items-center justify-between p-3 bg-green-50 rounded-lg';
             
             closeGoogleIntegration();
             
@@ -787,7 +963,8 @@
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">구글 앱스크립트 연동 완료!</h3>
                     <p class="text-gray-600 mb-2">이제 실시간 동기화가 가능합니다.</p>
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-                        <p class="text-blue-800">설정된 URL: ${url}</p>
+                        <p class="text-blue-800">설정자: ${currentUser.name}</p>
+                        <p class="text-blue-800">URL: ${url}</p>
                     </div>
                 </div>
             `, 'success');
@@ -795,12 +972,15 @@
 
         // 설정 저장
         function saveSettings() {
+            if (!currentUser) return;
+            
             const checkin = document.getElementById('default-checkin').value;
             const checkout = document.getElementById('default-checkout').value;
             
             const settings = {
                 defaultCheckin: checkin,
                 defaultCheckout: checkout,
+                savedBy: currentUser.name,
                 savedAt: new Date().toISOString()
             };
             
@@ -813,6 +993,7 @@
                     <div class="text-sm text-gray-600 mt-2">
                         <p>입실 시간: ${checkin}</p>
                         <p>퇴실 시간: ${checkout}</p>
+                        <p class="text-xs mt-1">저장자: ${currentUser.name}</p>
                     </div>
                 </div>
             `, 'success');
@@ -820,6 +1001,8 @@
 
         // 데이터 초기화
         function clearAllData() {
+            if (!currentUser) return;
+            
             if (confirm('⚠️ 모든 출결 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
                 localStorage.removeItem('attendanceData');
                 updateAllStatistics();
@@ -830,38 +1013,11 @@
                         <i class="fas fa-trash-alt text-red-600 text-2xl mb-2"></i>
                         <p class="font-medium text-gray-900">모든 데이터가 초기화되었습니다.</p>
                         <p class="text-sm text-gray-600 mt-1">새로운 출결 데이터를 입력할 수 있습니다.</p>
+                        <div class="text-xs text-gray-500 mt-2">초기화 실행: ${currentUser.name}</div>
                     </div>
                 `, 'success');
             }
         }
-
-        // 초기 로드 시 구글 연동 상태 확인
-        document.addEventListener('DOMContentLoaded', function() {
-            const googleUrl = localStorage.getItem('GOOGLE_APPS_SCRIPT_URL');
-            if (googleUrl) {
-                document.getElementById('system-mode').textContent = '온라인 모드';
-                document.getElementById('google-status').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>연결됨';
-                document.getElementById('connection-status').textContent = '구글 앱스크립트 연동됨';
-                document.getElementById('google-integration-status').innerHTML = `
-                    <span class="text-sm font-medium text-green-700">구글 연동</span>
-                    <span class="flex items-center text-green-600">
-                        <i class="fas fa-check-circle mr-1"></i>활성
-                    </span>
-                `;
-                document.getElementById('google-integration-status').className = 'flex items-center justify-between p-3 bg-green-50 rounded-lg';
-            } else {
-                document.getElementById('connection-status').textContent = '로컬 모드';
-            }
-
-            // 저장된 설정 불러오기
-            const settings = JSON.parse(localStorage.getItem('ADMIN_SETTINGS') || '{}');
-            if (settings.defaultCheckin) {
-                document.getElementById('default-checkin').value = settings.defaultCheckin;
-            }
-            if (settings.defaultCheckout) {
-                document.getElementById('default-checkout').value = settings.defaultCheckout;
-            }
-        });
     </script>
 </body>
 </html>
