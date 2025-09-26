@@ -63,8 +63,8 @@
                 <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-search text-white text-2xl"></i>
                 </div>
-                <h2 class="text-xl font-bold text-gray-800 mb-2">나의 학습 기록 조회</h2>
-                <p class="text-gray-600">학번을 입력하여 개인 출결 현황을 확인하세요</p>
+                <h2 class="text-xl font-bold text-black mb-2">나의 학습 기록 조회</h2>
+                <p class="text-black">학번을 입력하여 개인 출결 현황을 확인하세요</p>
             </div>
 
             <div class="max-w-md mx-auto">
@@ -84,16 +84,16 @@
                         <i class="fas fa-search mr-2"></i>조회
                     </button>
                 </div>
-                <div class="text-xs text-gray-500 mt-2 text-center">5자리 학번을 정확히 입력해주세요</div>
+                <div class="text-xs text-black mt-2 text-center">5자리 학번을 정확히 입력해주세요</div>
             </div>
         </div>
 
         <!-- 학생 정보가 없을 때 -->
         <div id="no-data-message" class="hidden glass-effect rounded-xl p-8 text-center">
-            <i class="fas fa-search text-gray-400 text-4xl mb-4"></i>
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">기록을 찾을 수 없습니다</h3>
-            <p class="text-gray-500 mb-4">입력하신 학번의 출결 기록이 없습니다.</p>
-            <div class="text-sm text-gray-400">
+            <i class="fas fa-search text-black text-4xl mb-4"></i>
+            <h3 class="text-lg font-semibold text-black mb-2">기록을 찾을 수 없습니다</h3>
+            <p class="text-black mb-4">입력하신 학번의 출결 기록이 없습니다.</p>
+            <div class="text-sm text-black">
                 <p>• 학번을 정확히 입력했는지 확인해주세요</p>
                 <p>• 아직 출결을 입력하지 않았다면 먼저 출결을 입력해주세요</p>
             </div>
@@ -115,10 +115,10 @@
                         </div>
                         <div>
                             <h2 class="text-2xl font-bold text-gray-900" id="student-info">김학생 (20101)</h2>
-                            <p class="text-gray-600">광영여자고등학교 2학년</p>
+                            <p class="text-black">광영여자고등학교 2학년</p>
                         </div>
                     </div>
-                    <button onclick="resetSearch()" class="text-gray-500 hover:text-gray-700">
+                    <button onclick="resetSearch()" class="text-black hover:text-gray-800">
                         <i class="fas fa-search mr-1"></i>다시 검색
                     </button>
                 </div>
@@ -133,7 +133,7 @@
                             <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <h3 class="text-sm font-medium text-gray-500">총 출석일수</h3>
+                            <h3 class="text-sm font-medium text-black">총 출석일수</h3>
                             <p class="text-2xl font-bold text-gray-900" id="total-days">0</p>
                             <p class="text-sm text-blue-600">일</p>
                         </div>
@@ -147,7 +147,7 @@
                             <i class="fas fa-clock text-green-600 text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <h3 class="text-sm font-medium text-gray-500">누적 학습시간</h3>
+                            <h3 class="text-sm font-medium text-black">누적 학습시간</h3>
                             <p class="text-2xl font-bold text-gray-900" id="total-study-time">0</p>
                             <p class="text-sm text-green-600">분</p>
                         </div>
@@ -161,7 +161,7 @@
                             <i class="fas fa-chart-line text-purple-600 text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <h3 class="text-sm font-medium text-gray-500">평균 학습시간</h3>
+                            <h3 class="text-sm font-medium text-black">평균 학습시간</h3>
                             <p class="text-2xl font-bold text-gray-900" id="avg-study-time">0</p>
                             <p class="text-sm text-purple-600">분</p>
                         </div>
@@ -175,7 +175,7 @@
                             <i class="fas fa-percentage text-yellow-600 text-xl"></i>
                         </div>
                         <div class="ml-4">
-                            <h3 class="text-sm font-medium text-gray-500">출석률</h3>
+                            <h3 class="text-sm font-medium text-black">출석률</h3>
                             <p class="text-2xl font-bold text-gray-900" id="attendance-rate">0</p>
                             <p class="text-sm text-yellow-600">%</p>
                         </div>
@@ -222,18 +222,18 @@
             <!-- 최근 출결 기록 -->
             <div class="glass-effect rounded-xl p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-history text-gray-600 mr-2"></i>
+                    <i class="fas fa-history text-black mr-2"></i>
                     최근 출결 기록
                 </h3>
                 <div class="overflow-x-auto">
                     <table class="min-w-full">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">날짜</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">입실시간</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">퇴실시간</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">학습시간</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">날짜</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">입실시간</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">퇴실시간</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">학습시간</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-black uppercase">상태</th>
                             </tr>
                         </thead>
                         <tbody id="recent-records" class="divide-y divide-gray-200">
@@ -622,7 +622,7 @@
                             <i class="fas ${badge.icon} text-white text-lg"></i>
                         </div>
                         <h4 class="font-semibold text-gray-900 text-sm">${badge.title}</h4>
-                        <p class="text-xs text-gray-600">${badge.desc}</p>
+                        <p class="text-xs text-gray-700">${badge.desc}</p>
                     </div>
                 `).join('');
             }
