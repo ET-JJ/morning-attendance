@@ -1,479 +1,756 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>관리자 대시보드 - 광영여고 아침자습</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .admin-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .admin-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
-</head>
-<body class="bg-gray-50">
-    <!-- 로그인 화면 -->
-    <div id="login-screen" class="login-container gradient-bg">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
-            <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-user-shield text-indigo-600 text-3xl"></i>
-                </div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">관리자 로그인</h1>
-                <p class="text-gray-600">JJ 선생님 전용 아침자습 관리 시스템</p>
-            </div>
-
-            <!-- 수동 로그인 -->
-            <div class="space-y-4">
-                <input 
-                    type="password" 
-                    id="manual-password" 
-                    placeholder="관리자 비밀번호 입력" 
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center"
-                >
-                <button 
-                    onclick="manualLogin()" 
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-                >
-                    <i class="fas fa-key mr-2"></i>관리자 로그인
-                </button>
-                
-                <div class="text-center text-sm text-gray-500">
-                    <p>비밀번호: <strong>jj2024</strong> 또는 <strong>광영여고2024</strong></p>
-                </div>
-            </div>
-
-            <div class="mt-8 text-center">
-                <div class="text-xs text-gray-400">
-                    <i class="fas fa-lock mr-1"></i>
-                    승인된 계정만 접근 가능합니다
-                </div>
-                <div class="mt-2">
-                    <a href="index.html" class="text-sm text-indigo-600 hover:text-indigo-800">
-                        ← 출결 입력 페이지로 돌아가기
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 메인 관리자 페이지 (로그인 후 표시) -->
-    <div id="admin-dashboard" class="hidden">
-        <!-- 헤더 -->
-        <header class="gradient-bg shadow-lg">
-            <div class="max-w-7xl mx-auto px-4 py-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl md:text-3xl font-bold text-white mb-1">
-                            <i class="fas fa-user-shield mr-2"></i>관리자 대시보드
-                        </h1>
-                        <p class="text-indigo-100">JJ 선생님 전용 - 아침자습 시스템 관리</p>
-                    </div>
-                    <div class="text-right text-white">
-                        <div class="flex items-center mb-2">
-                            <span id="user-name" class="text-sm">JJ 선생님</span>
-                        </div>
-                        <div class="text-lg font-semibold" id="current-date"></div>
-                        <div class="text-sm text-indigo-200" id="current-time"></div>
-                        <button onclick="logout()" class="mt-2 text-xs bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full">
-                            <i class="fas fa-sign-out-alt mr-1"></i>로그아웃
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- 메인 컨텐츠 -->
-        <main class="max-w-7xl mx-auto px-4 py-8">
-            <!-- 시스템 알림 -->
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                <div class="flex items-center">
-                    <i class="fas fa-shield-check text-green-500 mr-3"></i>
-                    <div>
-                        <h3 class="text-green-900 font-medium">관리자 로그인 완료</h3>
-                        <p class="text-green-800 text-sm">안전하게 로그인되었습니다. 현재 <span class="font-semibold">로컬 모드</span>로 동작 중입니다.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 오늘의 출결 현황 -->
-            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-calendar-day text-indigo-600 mr-2"></i>
-                    오늘의 출결 현황
-                </h2>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="text-center p-4 bg-blue-50 rounded-lg">
-                        <div class="text-2xl font-bold text-blue-600" id="stat-total">0</div>
-                        <div class="text-sm text-gray-600">총 학생</div>
-                    </div>
-                    <div class="text-center p-4 bg-green-50 rounded-lg">
-                        <div class="text-2xl font-bold text-green-600" id="stat-completed">0</div>
-                        <div class="text-sm text-gray-600">완료</div>
-                    </div>
-                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
-                        <div class="text-2xl font-bold text-yellow-600" id="stat-ongoing">0</div>
-                        <div class="text-sm text-gray-600">진행중</div>
-                    </div>
-                    <div class="text-center p-4 bg-red-50 rounded-lg">
-                        <div class="text-2xl font-bold text-red-600" id="stat-missing">0</div>
-                        <div class="text-sm text-gray-600">미입력</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 빠른 액션 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                        <i class="fas fa-magic text-purple-600 mr-2"></i>고속 처리
-                    </h3>
-                    <button onclick="processAllMissing()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
-                        누락 데이터 처리
-                    </button>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                        <i class="fas fa-download text-green-600 mr-2"></i>데이터 내보내기
-                    </h3>
-                    <button onclick="exportCSV()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
-                        CSV 다운로드
-                    </button>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                        <i class="fas fa-chart-bar text-blue-600 mr-2"></i>전체 현황
-                    </h3>
-                    <a href="status.html" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-center">
-                        현황 페이지 보기
-                    </a>
-                </div>
-            </div>
-
-            <!-- 문제 학생 목록 -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
-                    처리 필요 학생
-                </h2>
-                <div id="problem-students">
-                    <div class="text-center py-8 text-gray-500">
-                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                        <p>데이터를 불러오는 중...</p>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <script>
-        let currentUser = null;
-
-        // 시간 업데이트
-        function updateDateTime() {
-            const now = new Date();
-            const dateElement = document.getElementById('current-date');
-            const timeElement = document.getElementById('current-time');
-            
-            if (dateElement) {
-                dateElement.textContent = now.toLocaleDateString('ko-KR', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric', 
-                    weekday: 'long' 
-                });
-            }
-            if (timeElement) {
-                timeElement.textContent = now.toLocaleTimeString('ko-KR');
-            }
-        }
-
-        // 수동 로그인
-        function manualLogin() {
-            const password = document.getElementById('manual-password').value;
-            const validPasswords = ['jj2024', 'admin123', '광영여고2024'];
-            
-            if (validPasswords.includes(password)) {
-                currentUser = {
-                    name: 'JJ 선생님',
-                    email: 'jj.teacher@admin',
-                    picture: '',
-                    loginType: 'manual'
-                };
-                localStorage.setItem('admin_user', JSON.stringify(currentUser));
-                showDashboard();
-            } else {
-                alert('올바르지 않은 비밀번호입니다.');
-                document.getElementById('manual-password').value = '';
-            }
-        }
-
-        // 대시보드 표시
-        function showDashboard() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('admin-dashboard').classList.remove('hidden');
-            
-            updateDateTime();
-            setInterval(updateDateTime, 1000);
-            
-            // 초기 데이터 로드
-            updateAllStatistics();
-        }
-
-        // 로그아웃
-        function logout() {
-            localStorage.removeItem('admin_user');
-            currentUser = null;
-            document.getElementById('login-screen').classList.remove('hidden');
-            document.getElementById('admin-dashboard').classList.add('hidden');
-            document.getElementById('manual-password').value = '';
-        }
-
-        // 오늘 데이터 가져오기
-        function getTodayData() {
-            const data = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-            const today = new Date().toDateString();
-            return data.filter(record => new Date(record.timestamp).toDateString() === today);
-        }
-
-        // 학생별 데이터 집계
-        function aggregateStudentData(data) {
-            const studentData = {};
-            
-            data.forEach(record => {
-                const id = record.studentId;
-                if (!studentData[id]) {
-                    studentData[id] = {
-                        studentId: id,
-                        studentName: record.studentName,
-                        checkIn: null,
-                        checkOut: null,
-                        records: []
-                    };
-                }
-                
-                studentData[id].records.push(record);
-                
-                if (record.status === '입실') {
-                    studentData[id].checkIn = record;
-                } else if (record.status === '퇴실') {
-                    studentData[id].checkOut = record;
-                }
-            });
-            
-            return Object.values(studentData);
-        }
-
-        // 전체 통계 업데이트
-        function updateAllStatistics() {
-            const todayData = getTodayData();
-            const students = aggregateStudentData(todayData);
-            
-            const total = students.length;
-            const completed = students.filter(s => s.checkIn && s.checkOut).length;
-            const ongoing = students.filter(s => s.checkIn && !s.checkOut).length;
-            const missing = students.filter(s => !s.checkIn).length;
-            
-            // 통계 업데이트
-            document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-completed').textContent = completed;
-            document.getElementById('stat-ongoing').textContent = ongoing;
-            document.getElementById('stat-missing').textContent = missing;
-
-            // 문제 학생 목록 업데이트
-            updateProblemStudents(students);
-        }
-
-        // 문제 학생 목록 업데이트
-        function updateProblemStudents(students) {
-            const problemContainer = document.getElementById('problem-students');
-            const problemStudents = students.filter(s => !s.checkIn || !s.checkOut);
-            
-            if (problemStudents.length === 0) {
-                problemContainer.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i>
-                        <p class="font-medium">완벽합니다!</p>
-                        <p class="text-sm">모든 학생이 정상적으로 출결을 완료했습니다.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            problemContainer.innerHTML = problemStudents.map(student => {
-                const issue = !student.checkIn ? '입실 누락' : '퇴실 누락';
-                const iconClass = !student.checkIn ? 'text-red-500' : 'text-yellow-500';
-                const icon = !student.checkIn ? 'fa-sign-in-alt' : 'fa-sign-out-alt';
-                const bgClass = !student.checkIn ? 'bg-red-50' : 'bg-yellow-50';
-                
-                return `
-                    <div class="flex items-center justify-between p-4 ${bgClass} rounded-lg mb-2">
-                        <div class="flex items-center">
-                            <i class="fas ${icon} ${iconClass} text-xl mr-3"></i>
-                            <div>
-                                <h4 class="font-semibold text-gray-900">${student.studentName} (${student.studentId})</h4>
-                                <p class="text-sm text-gray-600">${issue}</p>
-                            </div>
-                        </div>
-                        <button onclick="fixStudent('${student.studentId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm">
-                            수정
-                        </button>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // 누락 데이터 자동 처리
-        function processAllMissing() {
-            if (!confirm('모든 누락된 데이터를 자동으로 처리하시겠습니까?')) return;
-            
-            const todayData = getTodayData();
-            const students = aggregateStudentData(todayData);
-            const problemStudents = students.filter(s => !s.checkIn || !s.checkOut);
-            
-            let processedCount = 0;
-            const now = new Date();
-            
-            problemStudents.forEach(student => {
-                if (!student.checkIn) {
-                    // 입실 시간을 06:30으로 설정
-                    const checkInTime = new Date(now);
-                    checkInTime.setHours(6, 30, 0, 0);
-                    
-                    const checkInRecord = {
-                        studentId: student.studentId,
-                        studentName: student.studentName,
-                        status: '입실',
-                        timestamp: checkInTime.toISOString(),
-                        processed: true
-                    };
-                    
-                    const existingData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-                    existingData.push(checkInRecord);
-                    localStorage.setItem('attendanceData', JSON.stringify(existingData));
-                    processedCount++;
-                }
-                
-                if (!student.checkOut && student.checkIn) {
-                    // 퇴실 시간을 07:50으로 설정
-                    const checkOutTime = new Date(now);
-                    checkOutTime.setHours(7, 50, 0, 0);
-                    
-                    const checkOutRecord = {
-                        studentId: student.studentId,
-                        studentName: student.studentName,
-                        status: '퇴실',
-                        timestamp: checkOutTime.toISOString(),
-                        processed: true
-                    };
-                    
-                    const existingData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-                    existingData.push(checkOutRecord);
-                    localStorage.setItem('attendanceData', JSON.stringify(existingData));
-                    processedCount++;
-                }
-            });
-            
-            alert(`${processedCount}개의 누락 데이터가 자동으로 처리되었습니다.`);
-            updateAllStatistics();
-        }
-
-        // CSV 내보내기
-        function exportCSV() {
-            const data = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-            
-            if (data.length === 0) {
-                alert('내보낼 데이터가 없습니다.');
-                return;
-            }
-
-            const csvContent = [
-                ['학번', '이름', '상태', '시간', '날짜'].join(','),
-                ...data.map(record => [
-                    record.studentId,
-                    record.studentName,
-                    record.status,
-                    new Date(record.timestamp).toLocaleTimeString('ko-KR'),
-                    new Date(record.timestamp).toLocaleDateString('ko-KR')
-                ].join(','))
-            ].join('\n');
-
-            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `출결데이터_${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
-        }
-
-        // 개별 학생 수정
-        function fixStudent(studentId) {
-            const name = prompt('학생 이름을 입력하세요:');
-            if (!name) return;
-            
-            const action = prompt('처리할 작업을 선택하세요:\n1: 입실 추가\n2: 퇴실 추가');
-            if (!action || (action !== '1' && action !== '2')) return;
-            
-            const now = new Date();
-            const defaultTime = action === '1' ? '06:30' : '07:50';
-            const timeInput = prompt(`시간을 입력하세요 (HH:MM, 기본: ${defaultTime}):`, defaultTime);
-            
-            if (!timeInput) return;
-            
-            const [hours, minutes] = timeInput.split(':');
-            const recordTime = new Date(now);
-            recordTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-            
-            const record = {
-                studentId: studentId,
-                studentName: name,
-                status: action === '1' ? '입실' : '퇴실',
-                timestamp: recordTime.toISOString(),
-                processed: true
-            };
-            
-            const existingData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-            existingData.push(record);
-            localStorage.setItem('attendanceData', JSON.stringify(existingData));
-            
-            alert('데이터가 추가되었습니다.');
-            updateAllStatistics();
-        }
-
-        // Enter 키 이벤트
-        document.getElementById('manual-password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                manualLogin();
-            }
-        });
-
-        // 페이지 로드 시 자동 로그인 확인
-        window.onload = function() {
-            const savedUser = localStorage.getItem('admin_user');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                showDashboard();
-            }
-        };
-    </script>
-</body>
-</html>
+     1	<!DOCTYPE html>
+     2	<html lang="ko">
+     3	<head>
+     4	    <meta charset="UTF-8">
+     5	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6	    <title>관리자 대시보드 - 광영여고 아침자습</title>
+     7	    <script src="https://cdn.tailwindcss.com"></script>
+     8	    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     9	    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    10	    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    11	    <style>
+    12	        body { font-family: 'Inter', sans-serif; }
+    13	        .gradient-bg {
+    14	            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    15	        }
+    16	        .admin-card {
+    17	            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    18	        }
+    19	        .admin-card:hover {
+    20	            transform: translateY(-4px);
+    21	            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    22	        }
+    23	        .login-container {
+    24	            min-height: 100vh;
+    25	            display: flex;
+    26	            align-items: center;
+    27	            justify-content: center;
+    28	        }
+    29	    </style>
+    30	</head>
+    31	<body class="bg-gray-50">
+    32	    <!-- 로그인 화면 -->
+    33	    <div id="login-screen" class="login-container gradient-bg">
+    34	        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+    35	            <div class="text-center mb-8">
+    36	                <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+    37	                    <i class="fas fa-user-shield text-indigo-600 text-3xl"></i>
+    38	                </div>
+    39	                <h1 class="text-2xl font-bold text-gray-900 mb-2">관리자 로그인</h1>
+    40	                <p class="text-gray-600">JJ 선생님 전용 아침자습 관리 시스템</p>
+    41	            </div>
+    42	
+    43	            <!-- 수동 로그인 -->
+    44	            <div class="space-y-4">
+    45	                <input 
+    46	                    type="password" 
+    47	                    id="manual-password" 
+    48	                    placeholder="관리자 비밀번호 입력" 
+    49	                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center"
+    50	                >
+    51	                <button 
+    52	                    onclick="manualLogin()" 
+    53	                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+    54	                >
+    55	                    <i class="fas fa-key mr-2"></i>관리자 로그인
+    56	                </button>
+    57	                
+    58	                <div class="text-center text-sm text-gray-500">
+    59	                    <p>비밀번호: <strong>jj2024</strong> 또는 <strong>광영여고2024</strong></p>
+    60	                </div>
+    61	            </div>
+    62	
+    63	            <div class="mt-8 text-center">
+    64	                <div class="text-xs text-gray-400">
+    65	                    <i class="fas fa-lock mr-1"></i>
+    66	                    승인된 계정만 접근 가능합니다
+    67	                </div>
+    68	                <div class="mt-2">
+    69	                    <a href="index.html" class="text-sm text-indigo-600 hover:text-indigo-800">
+    70	                        ← 출결 입력 페이지로 돌아가기
+    71	                    </a>
+    72	                </div>
+    73	            </div>
+    74	        </div>
+    75	    </div>
+    76	
+    77	    <!-- 메인 관리자 페이지 (로그인 후 표시) -->
+    78	    <div id="admin-dashboard" class="hidden">
+    79	        <!-- 헤더 -->
+    80	        <header class="gradient-bg shadow-lg">
+    81	            <div class="max-w-7xl mx-auto px-4 py-6">
+    82	                <div class="flex items-center justify-between">
+    83	                    <div>
+    84	                        <h1 class="text-2xl md:text-3xl font-bold text-white mb-1">
+    85	                            <i class="fas fa-user-shield mr-2"></i>관리자 대시보드
+    86	                        </h1>
+    87	                        <p class="text-indigo-100">JJ 선생님 전용 - 아침자습 시스템 관리</p>
+    88	                    </div>
+    89	                    <div class="text-right text-white">
+    90	                        <div class="flex items-center mb-2">
+    91	                            <span id="user-name" class="text-sm">JJ 선생님</span>
+    92	                        </div>
+    93	                        <div class="text-lg font-semibold" id="current-date"></div>
+    94	                        <div class="text-sm text-indigo-200" id="current-time"></div>
+    95	                        <button onclick="logout()" class="mt-2 text-xs bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full">
+    96	                            <i class="fas fa-sign-out-alt mr-1"></i>로그아웃
+    97	                        </button>
+    98	                    </div>
+    99	                </div>
+   100	            </div>
+   101	        </header>
+   102	
+   103	        <!-- 메인 컨텐츠 -->
+   104	        <main class="max-w-7xl mx-auto px-4 py-8">
+   105	            <!-- 시스템 알림 -->
+   106	            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+   107	                <div class="flex items-center">
+   108	                    <i class="fas fa-shield-check text-green-500 mr-3"></i>
+   109	                    <div>
+   110	                        <h3 class="text-green-900 font-medium">관리자 로그인 완료</h3>
+   111	                        <p class="text-green-800 text-sm">안전하게 로그인되었습니다. 현재 <span class="font-semibold">로컬 모드</span>로 동작 중입니다.</p>
+   112	                    </div>
+   113	                </div>
+   114	            </div>
+   115	
+   116	            <!-- 오늘의 출결 현황 -->
+   117	            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+   118	                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+   119	                    <i class="fas fa-calendar-day text-indigo-600 mr-2"></i>
+   120	                    오늘의 출결 현황
+   121	                </h2>
+   122	                
+   123	                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+   124	                    <div class="text-center p-4 bg-blue-50 rounded-lg">
+   125	                        <div class="text-2xl font-bold text-blue-600" id="stat-total">0</div>
+   126	                        <div class="text-sm text-gray-600">총 학생</div>
+   127	                    </div>
+   128	                    <div class="text-center p-4 bg-green-50 rounded-lg">
+   129	                        <div class="text-2xl font-bold text-green-600" id="stat-completed">0</div>
+   130	                        <div class="text-sm text-gray-600">완료</div>
+   131	                    </div>
+   132	                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
+   133	                        <div class="text-2xl font-bold text-yellow-600" id="stat-ongoing">0</div>
+   134	                        <div class="text-sm text-gray-600">진행중</div>
+   135	                    </div>
+   136	                    <div class="text-center p-4 bg-red-50 rounded-lg">
+   137	                        <div class="text-2xl font-bold text-red-600" id="stat-missing">0</div>
+   138	                        <div class="text-sm text-gray-600">미입력</div>
+   139	                    </div>
+   140	                </div>
+   141	            </div>
+   142	
+   143	            <!-- 빠른 액션 -->
+   144	            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+   145	                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
+   146	                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+   147	                        <i class="fas fa-magic text-purple-600 mr-2"></i>고속 처리
+   148	                    </h3>
+   149	                    <button onclick="processAllMissing()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+   150	                        누락 데이터 처리
+   151	                    </button>
+   152	                </div>
+   153	
+   154	                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
+   155	                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+   156	                        <i class="fas fa-download text-green-600 mr-2"></i>데이터 내보내기
+   157	                    </h3>
+   158	                    <button onclick="exportCSV()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+   159	                        CSV 다운로드
+   160	                    </button>
+   161	                </div>
+   162	
+   163	                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
+   164	                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+   165	                        <i class="fas fa-chart-bar text-blue-600 mr-2"></i>전체 현황
+   166	                    </h3>
+   167	                    <a href="status.html" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-center">
+   168	                        현황 페이지 보기
+   169	                    </a>
+   170	                </div>
+   171	
+   172	                <div class="bg-white rounded-xl shadow-lg p-6 admin-card">
+   173	                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+   174	                        <i class="fas fa-trash text-red-600 mr-2"></i>데이터 관리
+   175	                    </h3>
+   176	                    <div class="space-y-2">
+   177	                        <button onclick="deleteToday()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-3 rounded text-sm transition-colors">
+   178	                            오늘 데이터 삭제
+   179	                        </button>
+   180	                        <button onclick="deleteAllData()" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded text-sm transition-colors">
+   181	                            전체 데이터 삭제
+   182	                        </button>
+   183	                    </div>
+   184	                </div>
+   185	            </div>
+   186	
+   187	            <!-- 전체 데이터 목록 -->
+   188	            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+   189	                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+   190	                    <i class="fas fa-list text-gray-600 mr-2"></i>
+   191	                    전체 출결 기록 관리
+   192	                    <span class="ml-auto text-sm font-normal text-gray-500" id="total-records-count">총 0개 기록</span>
+   193	                </h2>
+   194	                <div class="mb-4 flex flex-wrap gap-2">
+   195	                    <button onclick="showAllRecords()" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded text-sm hover:bg-indigo-200">
+   196	                        전체 보기
+   197	                    </button>
+   198	                    <button onclick="showTodayRecords()" class="bg-green-100 text-green-700 px-3 py-1 rounded text-sm hover:bg-green-200">
+   199	                        오늘 기록
+   200	                    </button>
+   201	                    <button onclick="showByStudent()" class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200">
+   202	                        학생별 보기
+   203	                    </button>
+   204	                </div>
+   205	                <div class="max-h-96 overflow-y-auto" id="all-records-container">
+   206	                    <div class="text-center py-8 text-gray-500">
+   207	                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+   208	                        <p>데이터를 불러오는 중...</p>
+   209	                    </div>
+   210	                </div>
+   211	            </div>
+   212	
+   213	            <!-- 문제 학생 목록 -->
+   214	            <div class="bg-white rounded-xl shadow-lg p-6">
+   215	                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+   216	                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+   217	                    처리 필요 학생
+   218	                </h2>
+   219	                <div id="problem-students">
+   220	                    <div class="text-center py-8 text-gray-500">
+   221	                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+   222	                        <p>데이터를 불러오는 중...</p>
+   223	                    </div>
+   224	                </div>
+   225	            </div>
+   226	        </main>
+   227	    </div>
+   228	
+   229	    <script>
+   230	        let currentUser = null;
+   231	
+   232	        // 시간 업데이트
+   233	        function updateDateTime() {
+   234	            const now = new Date();
+   235	            const dateElement = document.getElementById('current-date');
+   236	            const timeElement = document.getElementById('current-time');
+   237	            
+   238	            if (dateElement) {
+   239	                dateElement.textContent = now.toLocaleDateString('ko-KR', { 
+   240	                    year: 'numeric', 
+   241	                    month: 'long', 
+   242	                    day: 'numeric', 
+   243	                    weekday: 'long' 
+   244	                });
+   245	            }
+   246	            if (timeElement) {
+   247	                timeElement.textContent = now.toLocaleTimeString('ko-KR');
+   248	            }
+   249	        }
+   250	
+   251	        // 수동 로그인
+   252	        function manualLogin() {
+   253	            const password = document.getElementById('manual-password').value;
+   254	            const validPasswords = ['jj2024', 'admin123', '광영여고2024'];
+   255	            
+   256	            if (validPasswords.includes(password)) {
+   257	                currentUser = {
+   258	                    name: 'JJ 선생님',
+   259	                    email: 'jj.teacher@admin',
+   260	                    picture: '',
+   261	                    loginType: 'manual'
+   262	                };
+   263	                localStorage.setItem('admin_user', JSON.stringify(currentUser));
+   264	                showDashboard();
+   265	            } else {
+   266	                alert('올바르지 않은 비밀번호입니다.');
+   267	                document.getElementById('manual-password').value = '';
+   268	            }
+   269	        }
+   270	
+   271	        // 대시보드 표시
+   272	        function showDashboard() {
+   273	            document.getElementById('login-screen').classList.add('hidden');
+   274	            document.getElementById('admin-dashboard').classList.remove('hidden');
+   275	            
+   276	            updateDateTime();
+   277	            setInterval(updateDateTime, 1000);
+   278	            
+   279	            // 초기 데이터 로드
+   280	            updateAllStatistics();
+   281	            showAllRecords(); // 전체 기록 목록 표시
+   282	        }
+   283	
+   284	        // 로그아웃
+   285	        function logout() {
+   286	            localStorage.removeItem('admin_user');
+   287	            currentUser = null;
+   288	            document.getElementById('login-screen').classList.remove('hidden');
+   289	            document.getElementById('admin-dashboard').classList.add('hidden');
+   290	            document.getElementById('manual-password').value = '';
+   291	        }
+   292	
+   293	        // 오늘 데이터 가져오기
+   294	        function getTodayData() {
+   295	            const data = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   296	            const today = new Date().toDateString();
+   297	            return data.filter(record => new Date(record.timestamp).toDateString() === today);
+   298	        }
+   299	
+   300	        // 학생별 데이터 집계
+   301	        function aggregateStudentData(data) {
+   302	            const studentData = {};
+   303	            
+   304	            data.forEach(record => {
+   305	                const id = record.studentId;
+   306	                if (!studentData[id]) {
+   307	                    studentData[id] = {
+   308	                        studentId: id,
+   309	                        studentName: record.studentName,
+   310	                        checkIn: null,
+   311	                        checkOut: null,
+   312	                        records: []
+   313	                    };
+   314	                }
+   315	                
+   316	                studentData[id].records.push(record);
+   317	                
+   318	                if (record.status === '입실') {
+   319	                    studentData[id].checkIn = record;
+   320	                } else if (record.status === '퇴실') {
+   321	                    studentData[id].checkOut = record;
+   322	                }
+   323	            });
+   324	            
+   325	            return Object.values(studentData);
+   326	        }
+   327	
+   328	        // 전체 통계 업데이트
+   329	        function updateAllStatistics() {
+   330	            const todayData = getTodayData();
+   331	            const students = aggregateStudentData(todayData);
+   332	            
+   333	            const total = students.length;
+   334	            const completed = students.filter(s => s.checkIn && s.checkOut).length;
+   335	            const ongoing = students.filter(s => s.checkIn && !s.checkOut).length;
+   336	            const missing = students.filter(s => !s.checkIn).length;
+   337	            
+   338	            // 통계 업데이트
+   339	            document.getElementById('stat-total').textContent = total;
+   340	            document.getElementById('stat-completed').textContent = completed;
+   341	            document.getElementById('stat-ongoing').textContent = ongoing;
+   342	            document.getElementById('stat-missing').textContent = missing;
+   343	
+   344	            // 문제 학생 목록 업데이트
+   345	            updateProblemStudents(students);
+   346	        }
+   347	
+   348	        // 문제 학생 목록 업데이트
+   349	        function updateProblemStudents(students) {
+   350	            const problemContainer = document.getElementById('problem-students');
+   351	            const problemStudents = students.filter(s => !s.checkIn || !s.checkOut);
+   352	            
+   353	            if (problemStudents.length === 0) {
+   354	                problemContainer.innerHTML = `
+   355	                    <div class="text-center py-8 text-gray-500">
+   356	                        <i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i>
+   357	                        <p class="font-medium">완벽합니다!</p>
+   358	                        <p class="text-sm">모든 학생이 정상적으로 출결을 완료했습니다.</p>
+   359	                    </div>
+   360	                `;
+   361	                return;
+   362	            }
+   363	
+   364	            problemContainer.innerHTML = problemStudents.map(student => {
+   365	                const issue = !student.checkIn ? '입실 누락' : '퇴실 누락';
+   366	                const iconClass = !student.checkIn ? 'text-red-500' : 'text-yellow-500';
+   367	                const icon = !student.checkIn ? 'fa-sign-in-alt' : 'fa-sign-out-alt';
+   368	                const bgClass = !student.checkIn ? 'bg-red-50' : 'bg-yellow-50';
+   369	                
+   370	                return `
+   371	                    <div class="flex items-center justify-between p-4 ${bgClass} rounded-lg mb-2">
+   372	                        <div class="flex items-center">
+   373	                            <i class="fas ${icon} ${iconClass} text-xl mr-3"></i>
+   374	                            <div>
+   375	                                <h4 class="font-semibold text-gray-900">${student.studentName} (${student.studentId})</h4>
+   376	                                <p class="text-sm text-gray-600">${issue}</p>
+   377	                            </div>
+   378	                        </div>
+   379	                        <div class="flex space-x-2">
+   380	                            <button onclick="fixStudent('${student.studentId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm">
+   381	                                수정
+   382	                            </button>
+   383	                            <button onclick="deleteStudentData('${student.studentId}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+   384	                                삭제
+   385	                            </button>
+   386	                        </div>
+   387	                    </div>
+   388	                `;
+   389	            }).join('');
+   390	        }
+   391	
+   392	        // 누락 데이터 자동 처리
+   393	        function processAllMissing() {
+   394	            if (!confirm('모든 누락된 데이터를 자동으로 처리하시겠습니까?')) return;
+   395	            
+   396	            const todayData = getTodayData();
+   397	            const students = aggregateStudentData(todayData);
+   398	            const problemStudents = students.filter(s => !s.checkIn || !s.checkOut);
+   399	            
+   400	            let processedCount = 0;
+   401	            const now = new Date();
+   402	            
+   403	            problemStudents.forEach(student => {
+   404	                if (!student.checkIn) {
+   405	                    // 입실 시간을 06:30으로 설정
+   406	                    const checkInTime = new Date(now);
+   407	                    checkInTime.setHours(6, 30, 0, 0);
+   408	                    
+   409	                    const checkInRecord = {
+   410	                        studentId: student.studentId,
+   411	                        studentName: student.studentName,
+   412	                        status: '입실',
+   413	                        timestamp: checkInTime.toISOString(),
+   414	                        processed: true
+   415	                    };
+   416	                    
+   417	                    const existingData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   418	                    existingData.push(checkInRecord);
+   419	                    localStorage.setItem('attendanceData', JSON.stringify(existingData));
+   420	                    processedCount++;
+   421	                }
+   422	                
+   423	                if (!student.checkOut && student.checkIn) {
+   424	                    // 퇴실 시간을 07:50으로 설정
+   425	                    const checkOutTime = new Date(now);
+   426	                    checkOutTime.setHours(7, 50, 0, 0);
+   427	                    
+   428	                    const checkOutRecord = {
+   429	                        studentId: student.studentId,
+   430	                        studentName: student.studentName,
+   431	                        status: '퇴실',
+   432	                        timestamp: checkOutTime.toISOString(),
+   433	                        processed: true
+   434	                    };
+   435	                    
+   436	                    const existingData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   437	                    existingData.push(checkOutRecord);
+   438	                    localStorage.setItem('attendanceData', JSON.stringify(existingData));
+   439	                    processedCount++;
+   440	                }
+   441	            });
+   442	            
+   443	            alert(`${processedCount}개의 누락 데이터가 자동으로 처리되었습니다.`);
+   444	            updateAllStatistics();
+   445	        }
+   446	
+   447	        // CSV 내보내기
+   448	        function exportCSV() {
+   449	            const data = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   450	            
+   451	            if (data.length === 0) {
+   452	                alert('내보낼 데이터가 없습니다.');
+   453	                return;
+   454	            }
+   455	
+   456	            const csvContent = [
+   457	                ['학번', '이름', '상태', '시간', '날짜'].join(','),
+   458	                ...data.map(record => [
+   459	                    record.studentId,
+   460	                    record.studentName,
+   461	                    record.status,
+   462	                    new Date(record.timestamp).toLocaleTimeString('ko-KR'),
+   463	                    new Date(record.timestamp).toLocaleDateString('ko-KR')
+   464	                ].join(','))
+   465	            ].join('\n');
+   466	
+   467	            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+   468	            const link = document.createElement('a');
+   469	            link.href = URL.createObjectURL(blob);
+   470	            link.download = `출결데이터_${new Date().toISOString().split('T')[0]}.csv`;
+   471	            link.click();
+   472	        }
+   473	
+   474	        // 개별 학생 수정
+   475	        function fixStudent(studentId) {
+   476	            const name = prompt('학생 이름을 입력하세요:');
+   477	            if (!name) return;
+   478	            
+   479	            const action = prompt('처리할 작업을 선택하세요:\n1: 입실 추가\n2: 퇴실 추가');
+   480	            if (!action || (action !== '1' && action !== '2')) return;
+   481	            
+   482	            const now = new Date();
+   483	            const defaultTime = action === '1' ? '06:30' : '07:50';
+   484	            const timeInput = prompt(`시간을 입력하세요 (HH:MM, 기본: ${defaultTime}):`, defaultTime);
+   485	            
+   486	            if (!timeInput) return;
+   487	            
+   488	            const [hours, minutes] = timeInput.split(':');
+   489	            const recordTime = new Date(now);
+   490	            recordTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+   491	            
+   492	            const record = {
+   493	                studentId: studentId,
+   494	                studentName: name,
+   495	                status: action === '1' ? '입실' : '퇴실',
+   496	                timestamp: recordTime.toISOString(),
+   497	                processed: true
+   498	            };
+   499	            
+   500	            const existingData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   501	            existingData.push(record);
+   502	            localStorage.setItem('attendanceData', JSON.stringify(existingData));
+   503	            
+   504	            alert('데이터가 추가되었습니다.');
+   505	            updateAllStatistics();
+   506	        }
+   507	
+   508	        // Enter 키 이벤트
+   509	        document.getElementById('manual-password').addEventListener('keypress', function(e) {
+   510	            if (e.key === 'Enter') {
+   511	                manualLogin();
+   512	            }
+   513	        });
+   514	
+   515	        // 🗑️ 데이터 삭제 함수들
+   516	        
+   517	        // 오늘 데이터만 삭제
+   518	        function deleteToday() {
+   519	            if (!confirm('⚠️ 오늘의 모든 출결 데이터를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다!')) return;
+   520	            
+   521	            const allData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   522	            const today = new Date().toDateString();
+   523	            const filteredData = allData.filter(record => 
+   524	                new Date(record.timestamp).toDateString() !== today
+   525	            );
+   526	            
+   527	            localStorage.setItem('attendanceData', JSON.stringify(filteredData));
+   528	            
+   529	            alert('✅ 오늘 데이터가 삭제되었습니다!');
+   530	            updateAllStatistics();
+   531	            showAllRecords(); // 목록 새로고침
+   532	        }
+   533	        
+   534	        // 전체 데이터 삭제
+   535	        function deleteAllData() {
+   536	            const confirmation = prompt('🚨 정말로 모든 데이터를 삭제하시겠습니까?\n\n확인하려면 "모든데이터삭제"를 입력하세요:');
+   537	            
+   538	            if (confirmation !== '모든데이터삭제') {
+   539	                alert('❌ 취소되었습니다.');
+   540	                return;
+   541	            }
+   542	            
+   543	            localStorage.removeItem('attendanceData');
+   544	            
+   545	            alert('✅ 모든 데이터가 삭제되었습니다!');
+   546	            updateAllStatistics();
+   547	            showAllRecords(); // 목록 새로고침
+   548	        }
+   549	        
+   550	        // 특정 학생의 모든 데이터 삭제
+   551	        function deleteStudentData(studentId) {
+   552	            const studentName = prompt('⚠️ 정말로 이 학생의 모든 데이터를 삭제하시겠습니까?\n\n확인하려면 학생 이름을 입력하세요:');
+   553	            if (!studentName) return;
+   554	            
+   555	            const allData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   556	            const filteredData = allData.filter(record => record.studentId !== studentId);
+   557	            
+   558	            if (allData.length === filteredData.length) {
+   559	                alert('❌ 해당 학생의 데이터를 찾을 수 없습니다.');
+   560	                return;
+   561	            }
+   562	            
+   563	            localStorage.setItem('attendanceData', JSON.stringify(filteredData));
+   564	            
+   565	            alert(`✅ ${studentName} 학생의 데이터가 삭제되었습니다!`);
+   566	            updateAllStatistics();
+   567	            showAllRecords(); // 목록 새로고침
+   568	        }
+   569	        
+   570	        // 개별 기록 삭제
+   571	        function deleteRecord(recordIndex) {
+   572	            if (!confirm('⚠️ 이 기록을 삭제하시겠습니까?')) return;
+   573	            
+   574	            const allData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   575	            allData.splice(recordIndex, 1);
+   576	            localStorage.setItem('attendanceData', JSON.stringify(allData));
+   577	            
+   578	            alert('✅ 기록이 삭제되었습니다!');
+   579	            updateAllStatistics();
+   580	            showAllRecords(); // 목록 새로고침
+   581	        }
+   582	        
+   583	        // 📊 데이터 조회 함수들
+   584	        
+   585	        // 전체 기록 보기
+   586	        function showAllRecords() {
+   587	            const allData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   588	            const container = document.getElementById('all-records-container');
+   589	            
+   590	            document.getElementById('total-records-count').textContent = `총 ${allData.length}개 기록`;
+   591	            
+   592	            if (allData.length === 0) {
+   593	                container.innerHTML = `
+   594	                    <div class="text-center py-8 text-gray-500">
+   595	                        <i class="fas fa-inbox text-gray-300 text-3xl mb-2"></i>
+   596	                        <p class="font-medium">등록된 데이터가 없습니다</p>
+   597	                        <p class="text-sm">학생들이 출결을 입력하면 여기에 표시됩니다</p>
+   598	                    </div>
+   599	                `;
+   600	                return;
+   601	            }
+   602	            
+   603	            // 최신순으로 정렬
+   604	            const sortedData = allData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+   605	            
+   606	            container.innerHTML = `
+   607	                <div class="space-y-2">
+   608	                    ${sortedData.map((record, index) => `
+   609	                        <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+   610	                            <div class="flex items-center space-x-3">
+   611	                                <div class="w-8 h-8 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center">
+   612	                                    <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
+   613	                                </div>
+   614	                                <div>
+   615	                                    <div class="font-medium text-gray-900">${record.studentName} (${record.studentId})</div>
+   616	                                    <div class="text-sm text-gray-500">
+   617	                                        ${record.status} • ${new Date(record.timestamp).toLocaleString('ko-KR')}
+   618	                                        ${record.processed ? ' • <span class="text-blue-500">자동처리</span>' : ''}
+   619	                                    </div>
+   620	                                </div>
+   621	                            </div>
+   622	                            <button onclick="deleteRecord(${allData.indexOf(record)})" class="text-red-500 hover:text-red-700 px-2 py-1">
+   623	                                <i class="fas fa-trash text-sm"></i>
+   624	                            </button>
+   625	                        </div>
+   626	                    `).join('')}
+   627	                </div>
+   628	            `;
+   629	        }
+   630	        
+   631	        // 오늘 기록만 보기
+   632	        function showTodayRecords() {
+   633	            const allData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   634	            const today = new Date().toDateString();
+   635	            const todayData = allData.filter(record => 
+   636	                new Date(record.timestamp).toDateString() === today
+   637	            );
+   638	            
+   639	            const container = document.getElementById('all-records-container');
+   640	            document.getElementById('total-records-count').textContent = `오늘 ${todayData.length}개 기록`;
+   641	            
+   642	            if (todayData.length === 0) {
+   643	                container.innerHTML = `
+   644	                    <div class="text-center py-8 text-gray-500">
+   645	                        <i class="fas fa-calendar-day text-gray-300 text-3xl mb-2"></i>
+   646	                        <p class="font-medium">오늘 등록된 데이터가 없습니다</p>
+   647	                        <p class="text-sm">아직 아무도 출결을 입력하지 않았습니다</p>
+   648	                    </div>
+   649	                `;
+   650	                return;
+   651	            }
+   652	            
+   653	            // 최신순으로 정렬
+   654	            const sortedData = todayData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+   655	            
+   656	            container.innerHTML = `
+   657	                <div class="space-y-2">
+   658	                    ${sortedData.map((record, index) => {
+   659	                        const originalIndex = allData.indexOf(record);
+   660	                        return `
+   661	                        <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+   662	                            <div class="flex items-center space-x-3">
+   663	                                <div class="w-8 h-8 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center">
+   664	                                    <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
+   665	                                </div>
+   666	                                <div>
+   667	                                    <div class="font-medium text-gray-900">${record.studentName} (${record.studentId})</div>
+   668	                                    <div class="text-sm text-gray-500">
+   669	                                        ${record.status} • ${new Date(record.timestamp).toLocaleTimeString('ko-KR')}
+   670	                                        ${record.processed ? ' • <span class="text-blue-500">자동처리</span>' : ''}
+   671	                                    </div>
+   672	                                </div>
+   673	                            </div>
+   674	                            <button onclick="deleteRecord(${originalIndex})" class="text-red-500 hover:text-red-700 px-2 py-1">
+   675	                                <i class="fas fa-trash text-sm"></i>
+   676	                            </button>
+   677	                        </div>
+   678	                    `}).join('')}
+   679	                </div>
+   680	            `;
+   681	        }
+   682	        
+   683	        // 학생별 보기
+   684	        function showByStudent() {
+   685	            const allData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+   686	            const studentGroups = {};
+   687	            
+   688	            // 학생별로 그룹화
+   689	            allData.forEach(record => {
+   690	                if (!studentGroups[record.studentId]) {
+   691	                    studentGroups[record.studentId] = {
+   692	                        name: record.studentName,
+   693	                        records: []
+   694	                    };
+   695	                }
+   696	                studentGroups[record.studentId].records.push(record);
+   697	            });
+   698	            
+   699	            const container = document.getElementById('all-records-container');
+   700	            const studentCount = Object.keys(studentGroups).length;
+   701	            
+   702	            document.getElementById('total-records-count').textContent = `${studentCount}명의 학생 기록`;
+   703	            
+   704	            if (studentCount === 0) {
+   705	                container.innerHTML = `
+   706	                    <div class="text-center py-8 text-gray-500">
+   707	                        <i class="fas fa-users text-gray-300 text-3xl mb-2"></i>
+   708	                        <p class="font-medium">등록된 학생이 없습니다</p>
+   709	                        <p class="text-sm">출결을 입력한 학생들이 여기에 표시됩니다</p>
+   710	                    </div>
+   711	                `;
+   712	                return;
+   713	            }
+   714	            
+   715	            container.innerHTML = `
+   716	                <div class="space-y-4">
+   717	                    ${Object.entries(studentGroups).map(([studentId, data]) => `
+   718	                        <div class="border rounded-lg p-4">
+   719	                            <div class="flex items-center justify-between mb-3">
+   720	                                <h4 class="font-semibold text-gray-900">${data.name} (${studentId})</h4>
+   721	                                <div class="flex items-center space-x-2">
+   722	                                    <span class="text-sm text-gray-500">${data.records.length}개 기록</span>
+   723	                                    <button onclick="deleteStudentData('${studentId}')" class="text-red-500 hover:text-red-700 text-sm">
+   724	                                        <i class="fas fa-trash mr-1"></i>전체삭제
+   725	                                    </button>
+   726	                                </div>
+   727	                            </div>
+   728	                            <div class="space-y-1 max-h-32 overflow-y-auto">
+   729	                                ${data.records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(record => {
+   730	                                    const originalIndex = allData.indexOf(record);
+   731	                                    return `
+   732	                                    <div class="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
+   733	                                        <span>${record.status} • ${new Date(record.timestamp).toLocaleString('ko-KR')}</span>
+   734	                                        <button onclick="deleteRecord(${originalIndex})" class="text-red-500 hover:text-red-700">
+   735	                                            <i class="fas fa-times"></i>
+   736	                                        </button>
+   737	                                    </div>
+   738	                                `}).join('')}
+   739	                            </div>
+   740	                        </div>
+   741	                    `).join('')}
+   742	                </div>
+   743	            `;
+   744	        }
+   745	
+   746	        // 페이지 로드 시 자동 로그인 확인
+   747	        window.onload = function() {
+   748	            const savedUser = localStorage.getItem('admin_user');
+   749	            if (savedUser) {
+   750	                currentUser = JSON.parse(savedUser);
+   751	                showDashboard();
+   752	            }
+   753	        };
+   754	    </script>
+   755	</body>
+   756	</html>
