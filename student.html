@@ -1,0 +1,50 @@
+     1	<!DOCTYPE html>
+     2	<html lang="ko">
+     3	<head>
+     4	    <meta charset="UTF-8">
+     5	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6	    <title>개인 학습 현황 - 광영여고 아침자습</title>
+     7	    <script src="https://cdn.tailwindcss.com"></script>
+     8	    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     9	    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    10	    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    11	    <style>
+    12	        body { font-family: 'Inter', sans-serif; }
+    13	        .gradient-bg {
+    14	            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    15	        }
+    16	        .glass-effect {
+    17	            background: rgba(255, 255, 255, 0.95);
+    18	            backdrop-filter: blur(10px);
+    19	            border: 1px solid rgba(255, 255, 255, 0.2);
+    20	        }
+    21	        .stats-card {
+    22	            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    23	        }
+    24	        .stats-card:hover {
+    25	            transform: translateY(-4px);
+    26	            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    27	        }
+    28	        .achievement-badge {
+    29	            animation: bounce 2s infinite;
+    30	        }
+    31	        @keyframes bounce {
+    32	            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    33	            40% { transform: translateY(-10px); }
+    34	            60% { transform: translateY(-5px); }
+    35	        }
+    36	    </style>
+    37	</head>
+    38	<body class="gradient-bg min-h-screen">
+    39	    <!-- 헤더 -->
+    40	    <header class="text-white py-6">
+    41	        <div class="max-w-6xl mx-auto px-4">
+    42	            <div class="flex items-center justify-between">
+    43	                <div>
+    44	                    <h1 class="text-2xl md:text-3xl font-bold mb-1">
+    45	                        <i class="fas fa-user-graduate mr-2"></i>
+    46	                        개인 학습 현황
+    47	                    </h1>
+    48	                    <p class="text-indigo-100">광영여자고등학교 아침자습 기록</p>
+    49	                </div>
+    50	                <div class="text-right">
