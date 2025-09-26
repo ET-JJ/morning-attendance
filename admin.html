@@ -1,540 +1,523 @@
-     1	<!DOCTYPE html>
-     2	<html lang="ko">
-     3	<head>
-     4	    <meta charset="UTF-8">
-     5	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     6	    <title>JJ 선생님 관리자 대시보드</title>
-     7	    <script src="https://cdn.tailwindcss.com"></script>
-     8	    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-     9	    <style>
-    10	        body { font-family: 'Arial', sans-serif; }
-    11	        .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-    12	        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    13	    </style>
-    14	</head>
-    15	<body class="bg-gray-50">
-    16	    <!-- 로그인 화면 -->
-    17	    <div id="login" class="min-h-screen flex items-center justify-center gradient-bg">
-    18	        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4">
-    19	            <div class="text-center mb-6">
-    20	                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-    21	                    <i class="fas fa-user-shield text-indigo-600 text-2xl"></i>
-    22	                </div>
-    23	                <h1 class="text-2xl font-bold text-gray-800">JJ 선생님 전용</h1>
-    24	                <p class="text-gray-600 mb-2">아침자습 관리 시스템</p>
-    25	                <p class="text-sm text-green-600">✅ 완전한 삭제 기능 포함</p>
-    26	            </div>
-    27	            
-    28	            <div class="space-y-4">
-    29	                <input 
-    30	                    type="password" 
-    31	                    id="password" 
-    32	                    placeholder="관리자 비밀번호 입력" 
-    33	                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-center"
-    34	                    onkeypress="if(event.key==='Enter') login()"
-    35	                >
-    36	                <button 
-    37	                    onclick="login()" 
-    38	                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg font-semibold btn-hover transition-all"
-    39	                >
-    40	                    <i class="fas fa-sign-in-alt mr-2"></i>관리자 로그인
-    41	                </button>
-    42	                
-    43	                <div class="text-center text-sm text-gray-500 space-y-1">
-    44	                    <div class="text-xs text-gray-400">
-    45	                        <i class="fas fa-lock mr-1"></i>
-    46	                        JJ 선생님 전용 - 승인된 계정만 접근 가능
-    47	                    </div>
-    48	                    <div class="text-xs text-blue-600">🔥 2024.09.26 보안 강화 버전</div>
-    49	                </div>
-    50	            </div>
-    51	
-    52	            <div class="mt-6 text-center">
-    53	                <a href="index.html" class="text-sm text-indigo-600 hover:text-indigo-800">
-    54	                    ← 출결 입력 페이지로 돌아가기
-    55	                </a>
-    56	            </div>
-    57	        </div>
-    58	    </div>
-    59	
-    60	    <!-- 관리자 대시보드 -->
-    61	    <div id="dashboard" class="hidden min-h-screen bg-gray-50">
-    62	        <!-- 헤더 -->
-    63	        <div class="gradient-bg text-white py-4">
-    64	            <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
-    65	                <div>
-    66	                    <h1 class="text-xl font-bold flex items-center">
-    67	                        <i class="fas fa-tachometer-alt mr-2"></i>
-    68	                        JJ 선생님 관리자 대시보드
-    69	                    </h1>
-    70	                    <p class="text-sm text-indigo-200">광영여자고등학교 아침자습 시스템 v2.0</p>
-    71	                </div>
-    72	                <div class="text-right">
-    73	                    <div class="text-sm" id="current-time"></div>
-    74	                    <button onclick="logout()" class="text-xs bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded mt-1 transition-colors">
-    75	                        <i class="fas fa-sign-out-alt mr-1"></i>로그아웃
-    76	                    </button>
-    77	                </div>
-    78	            </div>
-    79	        </div>
-    80	
-    81	        <!-- 메인 내용 -->
-    82	        <div class="max-w-6xl mx-auto p-4">
-    83	            <!-- 통계 카드 -->
-    84	            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-    85	                <div class="bg-white p-4 rounded-xl shadow-sm border">
-    86	                    <div class="flex items-center justify-between">
-    87	                        <div>
-    88	                            <p class="text-sm text-gray-600">총 학생</p>
-    89	                            <p class="text-2xl font-bold text-blue-600" id="total-students">0</p>
-    90	                        </div>
-    91	                        <i class="fas fa-users text-blue-400 text-xl"></i>
-    92	                    </div>
-    93	                </div>
-    94	                
-    95	                <div class="bg-white p-4 rounded-xl shadow-sm border">
-    96	                    <div class="flex items-center justify-between">
-    97	                        <div>
-    98	                            <p class="text-sm text-gray-600">완료</p>
-    99	                            <p class="text-2xl font-bold text-green-600" id="completed">0</p>
-   100	                        </div>
-   101	                        <i class="fas fa-check-circle text-green-400 text-xl"></i>
-   102	                    </div>
-   103	                </div>
-   104	                
-   105	                <div class="bg-white p-4 rounded-xl shadow-sm border">
-   106	                    <div class="flex items-center justify-between">
-   107	                        <div>
-   108	                            <p class="text-sm text-gray-600">진행중</p>
-   109	                            <p class="text-2xl font-bold text-yellow-600" id="ongoing">0</p>
-   110	                        </div>
-   111	                        <i class="fas fa-clock text-yellow-400 text-xl"></i>
-   112	                    </div>
-   113	                </div>
-   114	                
-   115	                <div class="bg-white p-4 rounded-xl shadow-sm border">
-   116	                    <div class="flex items-center justify-between">
-   117	                        <div>
-   118	                            <p class="text-sm text-gray-600">미입력</p>
-   119	                            <p class="text-2xl font-bold text-red-600" id="missing">0</p>
-   120	                        </div>
-   121	                        <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
-   122	                    </div>
-   123	                </div>
-   124	            </div>
-   125	
-   126	            <!-- 관리 기능 버튼들 -->
-   127	            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-   128	                <button onclick="exportData()" class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
-   129	                    <i class="fas fa-download text-xl mb-2 block"></i>
-   130	                    <div class="font-semibold">CSV 다운로드</div>
-   131	                    <div class="text-xs opacity-90">데이터 내보내기</div>
-   132	                </button>
-   133	                
-   134	                <button onclick="deleteToday()" class="bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
-   135	                    <i class="fas fa-calendar-times text-xl mb-2 block"></i>
-   136	                    <div class="font-semibold">오늘 데이터 삭제</div>
-   137	                    <div class="text-xs opacity-90">오늘 기록만 삭제</div>
-   138	                </button>
-   139	                
-   140	                <button onclick="deleteAll()" class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
-   141	                    <i class="fas fa-trash text-xl mb-2 block"></i>
-   142	                    <div class="font-semibold">전체 데이터 삭제</div>
-   143	                    <div class="text-xs opacity-90">모든 기록 삭제</div>
-   144	                </button>
-   145	                
-   146	                <button onclick="viewStatus()" class="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
-   147	                    <i class="fas fa-chart-bar text-xl mb-2 block"></i>
-   148	                    <div class="font-semibold">전체 현황</div>
-   149	                    <div class="text-xs opacity-90">현황 페이지 이동</div>
-   150	                </button>
-   151	            </div>
-   152	
-   153	            <!-- 데이터 목록 -->
-   154	            <div class="bg-white rounded-xl shadow-sm border p-6">
-   155	                <div class="flex justify-between items-center mb-4">
-   156	                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
-   157	                        <i class="fas fa-list mr-2"></i>출결 기록 관리
-   158	                        <span class="ml-2 text-sm font-normal text-gray-500" id="record-count">총 0개 기록</span>
-   159	                    </h3>
-   160	                    <div class="flex space-x-2">
-   161	                        <button onclick="showAll()" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200 transition-colors">전체</button>
-   162	                        <button onclick="showToday()" class="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200 transition-colors">오늘</button>
-   163	                        <button onclick="showByStudent()" class="px-3 py-1 bg-purple-100 text-purple-700 rounded text-sm hover:bg-purple-200 transition-colors">학생별</button>
-   164	                    </div>
-   165	                </div>
-   166	                
-   167	                <div id="data-list" class="space-y-2 max-h-96 overflow-y-auto">
-   168	                    <div class="text-center py-8 text-gray-500">
-   169	                        <i class="fas fa-database text-3xl mb-2 text-gray-300"></i>
-   170	                        <p>데이터를 불러오는 중...</p>
-   171	                    </div>
-   172	                </div>
-   173	            </div>
-   174	        </div>
-   175	    </div>
-   176	
-   177	    <script>
-   178	        let currentView = 'all';
-   179	        
-   180	        // 시간 업데이트
-   181	        function updateTime() {
-   182	            const now = new Date();
-   183	            const timeElement = document.getElementById('current-time');
-   184	            if (timeElement) {
-   185	                timeElement.textContent = now.toLocaleString('ko-KR');
-   186	            }
-   187	        }
-   188	
-   189	        // 로그인
-   190	        function login() {
-   191	            const password = document.getElementById('password').value;
-   192	            if (password === 'jj2024' || password === '광영여고2024' || password === 'admin123') {
-   193	                document.getElementById('login').classList.add('hidden');
-   194	                document.getElementById('dashboard').classList.remove('hidden');
-   195	                updateStats();
-   196	                showAll();
-   197	                setInterval(updateTime, 1000);
-   198	                updateTime();
-   199	                console.log('✅ 로그인 성공 - JJ 선생님 관리자 시스템');
-   200	            } else {
-   201	                alert('❌ 올바르지 않은 비밀번호입니다.\n\n승인된 관리자만 접근 가능합니다.');
-   202	                document.getElementById('password').value = '';
-   203	                document.getElementById('password').focus();
-   204	            }
-   205	        }
-   206	
-   207	        // 로그아웃
-   208	        function logout() {
-   209	            if (confirm('로그아웃하시겠습니까?')) {
-   210	                document.getElementById('login').classList.remove('hidden');
-   211	                document.getElementById('dashboard').classList.add('hidden');
-   212	                document.getElementById('password').value = '';
-   213	            }
-   214	        }
-   215	
-   216	        // 데이터 가져오기
-   217	        function getData() {
-   218	            return JSON.parse(localStorage.getItem('attendanceData') || '[]');
-   219	        }
-   220	
-   221	        // 오늘 데이터 가져오기
-   222	        function getTodayData() {
-   223	            const data = getData();
-   224	            const today = new Date().toDateString();
-   225	            return data.filter(record => new Date(record.timestamp).toDateString() === today);
-   226	        }
-   227	
-   228	        // 통계 업데이트
-   229	        function updateStats() {
-   230	            const todayData = getTodayData();
-   231	            const students = {};
-   232	            
-   233	            todayData.forEach(record => {
-   234	                if (!students[record.studentId]) {
-   235	                    students[record.studentId] = { checkIn: false, checkOut: false };
-   236	                }
-   237	                if (record.status === '입실') students[record.studentId].checkIn = true;
-   238	                if (record.status === '퇴실') students[record.studentId].checkOut = true;
-   239	            });
-   240	
-   241	            const totalStudents = Object.keys(students).length;
-   242	            const completed = Object.values(students).filter(s => s.checkIn && s.checkOut).length;
-   243	            const ongoing = Object.values(students).filter(s => s.checkIn && !s.checkOut).length;
-   244	            const missing = Object.values(students).filter(s => !s.checkIn).length;
-   245	
-   246	            document.getElementById('total-students').textContent = totalStudents;
-   247	            document.getElementById('completed').textContent = completed;
-   248	            document.getElementById('ongoing').textContent = ongoing;
-   249	            document.getElementById('missing').textContent = missing;
-   250	        }
-   251	
-   252	        // 전체 기록 보기
-   253	        function showAll() {
-   254	            currentView = 'all';
-   255	            const data = getData();
-   256	            const container = document.getElementById('data-list');
-   257	            
-   258	            document.getElementById('record-count').textContent = `총 ${data.length}개 기록`;
-   259	            
-   260	            if (data.length === 0) {
-   261	                container.innerHTML = `
-   262	                    <div class="text-center py-12 text-gray-500">
-   263	                        <i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i>
-   264	                        <p class="font-medium">등록된 데이터가 없습니다</p>
-   265	                        <p class="text-sm mt-1">학생들이 출결을 입력하면 여기에 표시됩니다</p>
-   266	                        <div class="mt-4">
-   267	                            <a href="index.html" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 text-sm">
-   268	                                <i class="fas fa-plus mr-1"></i>출결 입력 페이지로 이동
-   269	                            </a>
-   270	                        </div>
-   271	                    </div>
-   272	                `;
-   273	                return;
-   274	            }
-   275	
-   276	            const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-   277	            
-   278	            container.innerHTML = sortedData.map((record, index) => `
-   279	                <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-   280	                    <div class="flex items-center space-x-3">
-   281	                        <div class="w-8 h-8 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center">
-   282	                            <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
-   283	                        </div>
-   284	                        <div>
-   285	                            <div class="font-medium">${record.studentName} (${record.studentId})</div>
-   286	                            <div class="text-sm text-gray-500">
-   287	                                ${record.status} • ${new Date(record.timestamp).toLocaleString('ko-KR')}
-   288	                                ${record.processed ? ' • <span class="text-blue-500">자동처리</span>' : ''}
-   289	                            </div>
-   290	                        </div>
-   291	                    </div>
-   292	                    <button onclick="deleteRecord(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">
-   293	                        <i class="fas fa-trash"></i>
-   294	                    </button>
-   295	                </div>
-   296	            `).join('');
-   297	        }
-   298	
-   299	        // 오늘 기록 보기
-   300	        function showToday() {
-   301	            currentView = 'today';
-   302	            const todayData = getTodayData();
-   303	            const allData = getData();
-   304	            const container = document.getElementById('data-list');
-   305	            
-   306	            document.getElementById('record-count').textContent = `오늘 ${todayData.length}개 기록`;
-   307	            
-   308	            if (todayData.length === 0) {
-   309	                container.innerHTML = `
-   310	                    <div class="text-center py-12 text-gray-500">
-   311	                        <i class="fas fa-calendar-day text-4xl mb-3 text-gray-300"></i>
-   312	                        <p class="font-medium">오늘 등록된 데이터가 없습니다</p>
-   313	                        <p class="text-sm mt-1">아직 아무도 출결을 입력하지 않았습니다</p>
-   314	                    </div>
-   315	                `;
-   316	                return;
-   317	            }
-   318	
-   319	            const sortedData = todayData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-   320	            
-   321	            container.innerHTML = sortedData.map(record => {
-   322	                const index = allData.indexOf(record);
-   323	                return `
-   324	                <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-   325	                    <div class="flex items-center space-x-3">
-   326	                        <div class="w-8 h-8 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center">
-   327	                            <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
-   328	                        </div>
-   329	                        <div>
-   330	                            <div class="font-medium">${record.studentName} (${record.studentId})</div>
-   331	                            <div class="text-sm text-gray-500">
-   332	                                ${record.status} • ${new Date(record.timestamp).toLocaleTimeString('ko-KR')}
-   333	                                ${record.processed ? ' • <span class="text-blue-500">자동처리</span>' : ''}
-   334	                            </div>
-   335	                        </div>
-   336	                    </div>
-   337	                    <button onclick="deleteRecord(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">
-   338	                        <i class="fas fa-trash"></i>
-   339	                    </button>
-   340	                </div>
-   341	            `}).join('');
-   342	        }
-   343	
-   344	        // 학생별 보기
-   345	        function showByStudent() {
-   346	            currentView = 'student';
-   347	            const data = getData();
-   348	            const students = {};
-   349	            
-   350	            data.forEach(record => {
-   351	                if (!students[record.studentId]) {
-   352	                    students[record.studentId] = {
-   353	                        name: record.studentName,
-   354	                        records: []
-   355	                    };
-   356	                }
-   357	                students[record.studentId].records.push(record);
-   358	            });
-   359	
-   360	            const container = document.getElementById('data-list');
-   361	            const studentCount = Object.keys(students).length;
-   362	            
-   363	            document.getElementById('record-count').textContent = `${studentCount}명의 학생 기록`;
-   364	            
-   365	            if (studentCount === 0) {
-   366	                container.innerHTML = `
-   367	                    <div class="text-center py-12 text-gray-500">
-   368	                        <i class="fas fa-users text-4xl mb-3 text-gray-300"></i>
-   369	                        <p class="font-medium">등록된 학생이 없습니다</p>
-   370	                        <p class="text-sm mt-1">출결을 입력한 학생들이 여기에 표시됩니다</p>
-   371	                    </div>
-   372	                `;
-   373	                return;
-   374	            }
-   375	
-   376	            container.innerHTML = Object.entries(students).map(([studentId, data]) => `
-   377	                <div class="border rounded-lg p-4 bg-gray-50">
-   378	                    <div class="flex justify-between items-center mb-2">
-   379	                        <h4 class="font-semibold text-gray-900">${data.name} (${studentId})</h4>
-   380	                        <div class="flex items-center space-x-2">
-   381	                            <span class="text-sm text-gray-500 bg-white px-2 py-1 rounded">${data.records.length}개 기록</span>
-   382	                            <button onclick="deleteStudent('${studentId}')" class="text-red-500 hover:text-red-700 text-sm bg-white px-2 py-1 rounded hover:bg-red-50 transition-colors">
-   383	                                <i class="fas fa-trash mr-1"></i>전체삭제
-   384	                            </button>
-   385	                        </div>
-   386	                    </div>
-   387	                    <div class="space-y-1 max-h-32 overflow-y-auto">
-   388	                        ${data.records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(record => {
-   389	                            const allData = getData();
-   390	                            const index = allData.indexOf(record);
-   391	                            return `
-   392	                            <div class="flex justify-between items-center text-sm p-2 bg-white rounded border">
-   393	                                <span class="flex items-center">
-   394	                                    <div class="w-4 h-4 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center mr-2">
-   395	                                        <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
-   396	                                    </div>
-   397	                                    ${record.status} • ${new Date(record.timestamp).toLocaleString('ko-KR')}
-   398	                                </span>
-   399	                                <button onclick="deleteRecord(${index})" class="text-red-500 hover:text-red-700 px-1 py-1 rounded hover:bg-red-50 transition-colors">
-   400	                                    <i class="fas fa-times text-xs"></i>
-   401	                                </button>
-   402	                            </div>
-   403	                        `}).join('')}
-   404	                    </div>
-   405	                </div>
-   406	            `).join('');
-   407	        }
-   408	
-   409	        // 개별 기록 삭제
-   410	        function deleteRecord(index) {
-   411	            if (!confirm('⚠️ 이 기록을 삭제하시겠습니까?')) return;
-   412	            
-   413	            const data = getData();
-   414	            const deletedRecord = data[index];
-   415	            data.splice(index, 1);
-   416	            localStorage.setItem('attendanceData', JSON.stringify(data));
-   417	            
-   418	            // 현재 보기 새로고침
-   419	            if (currentView === 'all') showAll();
-   420	            else if (currentView === 'today') showToday();
-   421	            else if (currentView === 'student') showByStudent();
-   422	            
-   423	            updateStats();
-   424	            alert(`✅ ${deletedRecord.studentName}의 ${deletedRecord.status} 기록이 삭제되었습니다!`);
-   425	        }
-   426	
-   427	        // 학생 전체 삭제
-   428	        function deleteStudent(studentId) {
-   429	            const data = getData();
-   430	            const studentRecord = data.find(r => r.studentId === studentId);
-   431	            const studentName = studentRecord ? studentRecord.studentName : '학생';
-   432	            
-   433	            const confirmName = prompt(`⚠️ 정말로 ${studentName}의 모든 데이터를 삭제하시겠습니까?\n\n확인을 위해 학생 이름을 입력하세요:`);
-   434	            if (!confirmName || confirmName !== studentName) {
-   435	                if (confirmName) alert('❌ 학생 이름이 일치하지 않습니다.');
-   436	                return;
-   437	            }
-   438	            
-   439	            const filteredData = data.filter(record => record.studentId !== studentId);
-   440	            localStorage.setItem('attendanceData', JSON.stringify(filteredData));
-   441	            
-   442	            showByStudent();
-   443	            updateStats();
-   444	            alert(`✅ ${studentName} 학생의 모든 데이터가 삭제되었습니다!`);
-   445	        }
-   446	
-   447	        // 오늘 데이터 삭제
-   448	        function deleteToday() {
-   449	            const todayCount = getTodayData().length;
-   450	            if (todayCount === 0) {
-   451	                alert('❌ 오늘 삭제할 데이터가 없습니다.');
-   452	                return;
-   453	            }
-   454	            
-   455	            if (!confirm(`⚠️ 오늘의 모든 출결 데이터 ${todayCount}개를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다!`)) return;
-   456	            
-   457	            const allData = getData();
-   458	            const today = new Date().toDateString();
-   459	            const filteredData = allData.filter(record => 
-   460	                new Date(record.timestamp).toDateString() !== today
-   461	            );
-   462	            
-   463	            localStorage.setItem('attendanceData', JSON.stringify(filteredData));
-   464	            
-   465	            if (currentView === 'all') showAll();
-   466	            else if (currentView === 'today') showToday();
-   467	            else if (currentView === 'student') showByStudent();
-   468	            
-   469	            updateStats();
-   470	            alert(`✅ 오늘 데이터 ${todayCount}개가 삭제되었습니다!`);
-   471	        }
-   472	
-   473	        // 전체 데이터 삭제
-   474	        function deleteAll() {
-   475	            const totalCount = getData().length;
-   476	            if (totalCount === 0) {
-   477	                alert('❌ 삭제할 데이터가 없습니다.');
-   478	                return;
-   479	            }
-   480	            
-   481	            const confirmation = prompt(`🚨 정말로 모든 데이터 ${totalCount}개를 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다!\n\n확인하려면 "모든데이터삭제"를 정확히 입력하세요:`);
-   482	            
-   483	            if (confirmation !== '모든데이터삭제') {
-   484	                if (confirmation) alert('❌ 입력이 정확하지 않습니다. 취소되었습니다.');
-   485	                return;
-   486	            }
-   487	            
-   488	            localStorage.removeItem('attendanceData');
-   489	            
-   490	            if (currentView === 'all') showAll();
-   491	            else if (currentView === 'today') showToday();
-   492	            else if (currentView === 'student') showByStudent();
-   493	            
-   494	            updateStats();
-   495	            alert(`✅ 모든 데이터 ${totalCount}개가 삭제되었습니다!`);
-   496	        }
-   497	
-   498	        // CSV 다운로드
-   499	        function exportData() {
-   500	            const data = getData();
-   501	            
-   502	            if (data.length === 0) {
-   503	                alert('❌ 내보낼 데이터가 없습니다.');
-   504	                return;
-   505	            }
-   506	
-   507	            const csvContent = [
-   508	                ['학번', '이름', '상태', '시간', '날짜', '자동처리'].join(','),
-   509	                ...data.map(record => [
-   510	                    record.studentId,
-   511	                    record.studentName,
-   512	                    record.status,
-   513	                    new Date(record.timestamp).toLocaleTimeString('ko-KR'),
-   514	                    new Date(record.timestamp).toLocaleDateString('ko-KR'),
-   515	                    record.processed ? '자동' : '수동'
-   516	                ].join(','))
-   517	            ].join('\\n');
-   518	
-   519	            const blob = new Blob(['\\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-   520	            const link = document.createElement('a');
-   521	            link.href = URL.createObjectURL(blob);
-   522	            link.download = `광영여고_출결데이터_${new Date().toISOString().split('T')[0]}.csv`;
-   523	            link.click();
-   524	            
-   525	            alert(`✅ CSV 파일이 다운로드되었습니다! (${data.length}개 기록)`);
-   526	        }
-   527	
-   528	        // 현황 페이지 이동
-   529	        function viewStatus() {
-   530	            window.open('status.html', '_blank');
-   531	        }
-   532	
-   533	        // 페이지 로드 시 초기화
-   534	        window.onload = function() {
-   535	            console.log('🚀 JJ 선생님 관리자 시스템 로드 완료');
-   536	            document.getElementById('password').focus();
-   537	        };
-   538	    </script>
-   539	</body>
-   540	</html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JJ 선생님 관리자 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 로그인 화면 -->
+    <div id="login" class="min-h-screen flex items-center justify-center gradient-bg">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-shield text-indigo-600 text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">JJ 선생님 전용</h1>
+                <p class="text-gray-600 mb-2">아침자습 관리 시스템</p>
+                <p class="text-sm text-green-600">✅ 완전한 삭제 기능 포함</p>
+            </div>
+            
+            <div class="space-y-4">
+                <input 
+                    type="password" 
+                    id="password" 
+                    placeholder="관리자 비밀번호 입력" 
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-center"
+                    onkeypress="if(event.key==='Enter') login()"
+                >
+                <button 
+                    onclick="login()" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg font-semibold btn-hover transition-all"
+                >
+                    <i class="fas fa-sign-in-alt mr-2"></i>관리자 로그인
+                </button>
+                
+                <div class="text-center text-sm text-gray-500 space-y-1">
+                    <div class="text-xs text-gray-400">
+                        <i class="fas fa-lock mr-1"></i>
+                        JJ 선생님 전용 - 승인된 계정만 접근 가능
+                    </div>
+                    <div class="text-xs text-blue-600">🔥 2024.09.26 보안 강화 버전</div>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center">
+                <a href="index.html" class="text-sm text-indigo-600 hover:text-indigo-800">
+                    ← 출결 입력 페이지로 돌아가기
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 대시보드 -->
+    <div id="dashboard" class="hidden min-h-screen bg-gray-50">
+        <!-- 헤더 -->
+        <div class="gradient-bg text-white py-4">
+            <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        JJ 선생님 관리자 대시보드
+                    </h1>
+                    <p class="text-sm text-indigo-200">광영여자고등학교 아침자습 시스템 v2.0</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm" id="current-time"></div>
+                    <button onclick="logout()" class="text-xs bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded mt-1 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-1"></i>로그아웃
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 내용 -->
+        <div class="max-w-6xl mx-auto p-4">
+            <!-- 통계 카드 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">총 학생</p>
+                            <p class="text-2xl font-bold text-blue-600" id="total-students">0</p>
+                        </div>
+                        <i class="fas fa-users text-blue-400 text-xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">완료</p>
+                            <p class="text-2xl font-bold text-green-600" id="completed">0</p>
+                        </div>
+                        <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">진행중</p>
+                            <p class="text-2xl font-bold text-yellow-600" id="ongoing">0</p>
+                        </div>
+                        <i class="fas fa-clock text-yellow-400 text-xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">미입력</p>
+                            <p class="text-2xl font-bold text-red-600" id="missing">0</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 관리 기능 버튼들 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <button onclick="exportData()" class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
+                    <i class="fas fa-download text-xl mb-2 block"></i>
+                    <div class="font-semibold">CSV 다운로드</div>
+                    <div class="text-xs opacity-90">데이터 내보내기</div>
+                </button>
+                
+                <button onclick="deleteToday()" class="bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
+                    <i class="fas fa-calendar-times text-xl mb-2 block"></i>
+                    <div class="font-semibold">오늘 데이터 삭제</div>
+                    <div class="text-xs opacity-90">오늘 기록만 삭제</div>
+                </button>
+                
+                <button onclick="deleteAll()" class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
+                    <i class="fas fa-trash text-xl mb-2 block"></i>
+                    <div class="font-semibold">전체 데이터 삭제</div>
+                    <div class="text-xs opacity-90">모든 기록 삭제</div>
+                </button>
+                
+                <button onclick="viewStatus()" class="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
+                    <i class="fas fa-chart-bar text-xl mb-2 block"></i>
+                    <div class="font-semibold">전체 현황</div>
+                    <div class="text-xs opacity-90">현황 페이지 이동</div>
+                </button>
+            </div>
+
+            <!-- 데이터 목록 -->
+            <div class="bg-white rounded-xl shadow-sm border p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-list mr-2"></i>출결 기록 관리
+                        <span class="ml-2 text-sm font-normal text-gray-500" id="record-count">총 0개 기록</span>
+                    </h3>
+                    <div class="flex space-x-2">
+                        <button onclick="showAll()" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200 transition-colors">전체</button>
+                        <button onclick="showToday()" class="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200 transition-colors">오늘</button>
+                        <button onclick="showByStudent()" class="px-3 py-1 bg-purple-100 text-purple-700 rounded text-sm hover:bg-purple-200 transition-colors">학생별</button>
+                    </div>
+                </div>
+                
+                <div id="data-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-database text-3xl mb-2 text-gray-300"></i>
+                        <p>데이터를 불러오는 중...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentView = 'all';
+        
+        function updateTime() {
+            const now = new Date();
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleString('ko-KR');
+            }
+        }
+
+        function login() {
+            const password = document.getElementById('password').value;
+            if (password === 'jj2024' || password === '광영여고2024' || password === 'admin123') {
+                document.getElementById('login').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                updateStats();
+                showAll();
+                setInterval(updateTime, 1000);
+                updateTime();
+                console.log('로그인 성공 - JJ 선생님 관리자 시스템');
+            } else {
+                alert('올바르지 않은 비밀번호입니다. 승인된 관리자만 접근 가능합니다.');
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            }
+        }
+
+        function logout() {
+            if (confirm('로그아웃하시겠습니까?')) {
+                document.getElementById('login').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+                document.getElementById('password').value = '';
+            }
+        }
+
+        function getData() {
+            return JSON.parse(localStorage.getItem('attendanceData') || '[]');
+        }
+
+        function getTodayData() {
+            const data = getData();
+            const today = new Date().toDateString();
+            return data.filter(record => new Date(record.timestamp).toDateString() === today);
+        }
+
+        function updateStats() {
+            const todayData = getTodayData();
+            const students = {};
+            
+            todayData.forEach(record => {
+                if (!students[record.studentId]) {
+                    students[record.studentId] = { checkIn: false, checkOut: false };
+                }
+                if (record.status === '입실') students[record.studentId].checkIn = true;
+                if (record.status === '퇴실') students[record.studentId].checkOut = true;
+            });
+
+            const totalStudents = Object.keys(students).length;
+            const completed = Object.values(students).filter(s => s.checkIn && s.checkOut).length;
+            const ongoing = Object.values(students).filter(s => s.checkIn && !s.checkOut).length;
+            const missing = Object.values(students).filter(s => !s.checkIn).length;
+
+            document.getElementById('total-students').textContent = totalStudents;
+            document.getElementById('completed').textContent = completed;
+            document.getElementById('ongoing').textContent = ongoing;
+            document.getElementById('missing').textContent = missing;
+        }
+
+        function showAll() {
+            currentView = 'all';
+            const data = getData();
+            const container = document.getElementById('data-list');
+            
+            document.getElementById('record-count').textContent = `총 ${data.length}개 기록`;
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i>
+                        <p class="font-medium">등록된 데이터가 없습니다</p>
+                        <p class="text-sm mt-1">학생들이 출결을 입력하면 여기에 표시됩니다</p>
+                        <div class="mt-4">
+                            <a href="index.html" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 text-sm">
+                                <i class="fas fa-plus mr-1"></i>출결 입력 페이지로 이동
+                            </a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = sortedData.map((record, index) => `
+                <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center">
+                            <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium">${record.studentName} (${record.studentId})</div>
+                            <div class="text-sm text-gray-500">
+                                ${record.status} • ${new Date(record.timestamp).toLocaleString('ko-KR')}
+                                ${record.processed ? ' • <span class="text-blue-500">자동처리</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="deleteRecord(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function showToday() {
+            currentView = 'today';
+            const todayData = getTodayData();
+            const allData = getData();
+            const container = document.getElementById('data-list');
+            
+            document.getElementById('record-count').textContent = `오늘 ${todayData.length}개 기록`;
+            
+            if (todayData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="fas fa-calendar-day text-4xl mb-3 text-gray-300"></i>
+                        <p class="font-medium">오늘 등록된 데이터가 없습니다</p>
+                        <p class="text-sm mt-1">아직 아무도 출결을 입력하지 않았습니다</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const sortedData = todayData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = sortedData.map(record => {
+                const index = allData.indexOf(record);
+                return `
+                <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center">
+                            <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium">${record.studentName} (${record.studentId})</div>
+                            <div class="text-sm text-gray-500">
+                                ${record.status} • ${new Date(record.timestamp).toLocaleTimeString('ko-KR')}
+                                ${record.processed ? ' • <span class="text-blue-500">자동처리</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="deleteRecord(${index})" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `});
+        }
+
+        function showByStudent() {
+            currentView = 'student';
+            const data = getData();
+            const students = {};
+            
+            data.forEach(record => {
+                if (!students[record.studentId]) {
+                    students[record.studentId] = {
+                        name: record.studentName,
+                        records: []
+                    };
+                }
+                students[record.studentId].records.push(record);
+            });
+
+            const container = document.getElementById('data-list');
+            const studentCount = Object.keys(students).length;
+            
+            document.getElementById('record-count').textContent = `${studentCount}명의 학생 기록`;
+            
+            if (studentCount === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="fas fa-users text-4xl mb-3 text-gray-300"></i>
+                        <p class="font-medium">등록된 학생이 없습니다</p>
+                        <p class="text-sm mt-1">출결을 입력한 학생들이 여기에 표시됩니다</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = Object.entries(students).map(([studentId, data]) => `
+                <div class="border rounded-lg p-4 bg-gray-50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-semibold text-gray-900">${data.name} (${studentId})</h4>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500 bg-white px-2 py-1 rounded">${data.records.length}개 기록</span>
+                            <button onclick="deleteStudent('${studentId}')" class="text-red-500 hover:text-red-700 text-sm bg-white px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                                <i class="fas fa-trash mr-1"></i>전체삭제
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-1 max-h-32 overflow-y-auto">
+                        ${data.records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(record => {
+                            const allData = getData();
+                            const index = allData.indexOf(record);
+                            return `
+                            <div class="flex justify-between items-center text-sm p-2 bg-white rounded border">
+                                <span class="flex items-center">
+                                    <div class="w-4 h-4 ${record.status === '입실' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center mr-2">
+                                        <i class="fas ${record.status === '입실' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'} text-xs"></i>
+                                    </div>
+                                    ${record.status} • ${new Date(record.timestamp).toLocaleString('ko-KR')}
+                                </span>
+                                <button onclick="deleteRecord(${index})" class="text-red-500 hover:text-red-700 px-1 py-1 rounded hover:bg-red-50 transition-colors">
+                                    <i class="fas fa-times text-xs"></i>
+                                </button>
+                            </div>
+                        `;}).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteRecord(index) {
+            if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+            
+            const data = getData();
+            const deletedRecord = data[index];
+            data.splice(index, 1);
+            localStorage.setItem('attendanceData', JSON.stringify(data));
+            
+            if (currentView === 'all') showAll();
+            else if (currentView === 'today') showToday();
+            else if (currentView === 'student') showByStudent();
+            
+            updateStats();
+            alert(`${deletedRecord.studentName}의 ${deletedRecord.status} 기록이 삭제되었습니다!`);
+        }
+
+        function deleteStudent(studentId) {
+            const data = getData();
+            const studentRecord = data.find(r => r.studentId === studentId);
+            const studentName = studentRecord ? studentRecord.studentName : '학생';
+            
+            const confirmName = prompt(`정말로 ${studentName}의 모든 데이터를 삭제하시겠습니까? 확인을 위해 학생 이름을 입력하세요:`);
+            if (!confirmName || confirmName !== studentName) {
+                if (confirmName) alert('학생 이름이 일치하지 않습니다.');
+                return;
+            }
+            
+            const filteredData = data.filter(record => record.studentId !== studentId);
+            localStorage.setItem('attendanceData', JSON.stringify(filteredData));
+            
+            showByStudent();
+            updateStats();
+            alert(`${studentName} 학생의 모든 데이터가 삭제되었습니다!`);
+        }
+
+        function deleteToday() {
+            const todayCount = getTodayData().length;
+            if (todayCount === 0) {
+                alert('오늘 삭제할 데이터가 없습니다.');
+                return;
+            }
+            
+            if (!confirm(`오늘의 모든 출결 데이터 ${todayCount}개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다!`)) return;
+            
+            const allData = getData();
+            const today = new Date().toDateString();
+            const filteredData = allData.filter(record => 
+                new Date(record.timestamp).toDateString() !== today
+            );
+            
+            localStorage.setItem('attendanceData', JSON.stringify(filteredData));
+            
+            if (currentView === 'all') showAll();
+            else if (currentView === 'today') showToday();
+            else if (currentView === 'student') showByStudent();
+            
+            updateStats();
+            alert(`오늘 데이터 ${todayCount}개가 삭제되었습니다!`);
+        }
+
+        function deleteAll() {
+            const totalCount = getData().length;
+            if (totalCount === 0) {
+                alert('삭제할 데이터가 없습니다.');
+                return;
+            }
+            
+            const confirmation = prompt(`정말로 모든 데이터 ${totalCount}개를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다! 확인하려면 "모든데이터삭제"를 정확히 입력하세요:`);
+            
+            if (confirmation !== '모든데이터삭제') {
+                if (confirmation) alert('입력이 정확하지 않습니다. 취소되었습니다.');
+                return;
+            }
+            
+            localStorage.removeItem('attendanceData');
+            
+            if (currentView === 'all') showAll();
+            else if (currentView === 'today') showToday();
+            else if (currentView === 'student') showByStudent();
+            
+            updateStats();
+            alert(`모든 데이터 ${totalCount}개가 삭제되었습니다!`);
+        }
+
+        function exportData() {
+            const data = getData();
+            
+            if (data.length === 0) {
+                alert('내보낼 데이터가 없습니다.');
+                return;
+            }
+
+            const csvContent = [
+                ['학번', '이름', '상태', '시간', '날짜', '자동처리'].join(','),
+                ...data.map(record => [
+                    record.studentId,
+                    record.studentName,
+                    record.status,
+                    new Date(record.timestamp).toLocaleTimeString('ko-KR'),
+                    new Date(record.timestamp).toLocaleDateString('ko-KR'),
+                    record.processed ? '자동' : '수동'
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `광영여고_출결데이터_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            alert(`CSV 파일이 다운로드되었습니다! (${data.length}개 기록)`);
+        }
+
+        function viewStatus() {
+            window.open('status.html', '_blank');
+        }
+
+        window.onload = function() {
+            console.log('JJ 선생님 관리자 시스템 로드 완료');
+            document.getElementById('password').focus();
+        };
+    </script>
+</body>
+</html>
