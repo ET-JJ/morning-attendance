@@ -6,6 +6,8 @@
     <title>JJ 선생님 관리자 대시보드</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <!-- Google Apps Script 연동 API -->
+    <script src="js/api.js"></script>
     <style>
         body { font-family: 'Arial', sans-serif; }
         .btn-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
@@ -123,24 +125,72 @@
                 </div>
             </div>
 
+            <!-- Google Apps Script 연동 상태 -->
+            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl p-6 mb-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold flex items-center">
+                            <i class="fas fa-link mr-3"></i>
+                            Google Apps Script v8 연동 상태
+                        </h3>
+                        <p class="text-sm opacity-90 mt-1">JJ 선생님의 기존 구글 스프레드시트 시스템</p>
+                        <div class="flex items-center mt-2">
+                            <div id="connection-status" class="flex items-center">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                <span class="text-sm">연결 상태 확인 중...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <button onclick="openIntegrationGuide()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-2 block">
+                            <i class="fas fa-cog mr-1"></i>연동 설정
+                        </button>
+                        <button onclick="checkConnection()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <i class="fas fa-sync mr-1"></i>상태 새로고침
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 연동 기능 버튼들 -->
+                <div id="integration-features" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button onclick="syncWithGoogleSheets()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
+                        <i class="fas fa-cloud-upload-alt text-lg mb-1 block"></i>
+                        <div class="font-medium">데이터 동기화</div>
+                        <div class="text-xs opacity-80">오프라인 데이터를 구글로 전송</div>
+                    </button>
+                    
+                    <button onclick="triggerAutomation()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
+                        <i class="fas fa-robot text-lg mb-1 block"></i>
+                        <div class="font-medium">자동화 실행</div>
+                        <div class="text-xs opacity-80">누락 데이터 자동 처리</div>
+                    </button>
+                    
+                    <button onclick="openSpreadsheet()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
+                        <i class="fas fa-external-link-alt text-lg mb-1 block"></i>
+                        <div class="font-medium">스프레드시트 열기</div>
+                        <div class="text-xs opacity-80">구글 시트에서 직접 확인</div>
+                    </button>
+                </div>
+            </div>
+
             <!-- 관리 기능 버튼들 -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <button onclick="exportData()" class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
                     <i class="fas fa-download text-xl mb-2 block"></i>
                     <div class="font-semibold">CSV 다운로드</div>
-                    <div class="text-xs opacity-90">데이터 내보내기</div>
+                    <div class="text-xs opacity-90">로컬 데이터 내보내기</div>
                 </button>
                 
                 <button onclick="deleteToday()" class="bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
                     <i class="fas fa-calendar-times text-xl mb-2 block"></i>
                     <div class="font-semibold">오늘 데이터 삭제</div>
-                    <div class="text-xs opacity-90">오늘 기록만 삭제</div>
+                    <div class="text-xs opacity-90">오늘 로컬 기록만 삭제</div>
                 </button>
                 
                 <button onclick="deleteAll()" class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
                     <i class="fas fa-trash text-xl mb-2 block"></i>
-                    <div class="font-semibold">전체 데이터 삭제</div>
-                    <div class="text-xs opacity-90">모든 기록 삭제</div>
+                    <div class="font-semibold">로컬 데이터 삭제</div>
+                    <div class="text-xs opacity-90">로컬 저장소만 초기화</div>
                 </button>
                 
                 <button onclick="viewStatus()" class="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
@@ -483,9 +533,139 @@
             window.open('status.html', '_blank');
         }
 
+        // ========== Google Apps Script v8 연동 기능 ==========
+
+        async function checkConnection() {
+            const statusElement = document.getElementById('connection-status');
+            statusElement.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span class="text-sm">연결 상태 확인 중...</span>';
+            
+            try {
+                // api.js의 attendanceAPI가 로드되어 있는지 확인
+                if (typeof window.attendanceAPI === 'undefined') {
+                    // API 로드 시도
+                    const script = document.createElement('script');
+                    script.src = 'js/api.js';
+                    script.onload = () => {
+                        setTimeout(checkConnection, 500); // API 로드 후 다시 확인
+                    };
+                    document.head.appendChild(script);
+                    return;
+                }
+
+                const status = await window.attendanceAPI.checkConnection();
+                
+                if (status.connected === true) {
+                    statusElement.innerHTML = `
+                        <i class="fas fa-check-circle mr-2 text-green-300"></i>
+                        <span class="text-sm">✅ 구글 스프레드시트 v8 연결됨</span>
+                    `;
+                } else if (status.connected === 'unknown') {
+                    statusElement.innerHTML = `
+                        <i class="fas fa-wifi mr-2 text-yellow-300"></i>
+                        <span class="text-sm">🔄 하이브리드 모드 (로컬+구글)</span>
+                    `;
+                } else {
+                    statusElement.innerHTML = `
+                        <i class="fas fa-exclamation-triangle mr-2 text-orange-300"></i>
+                        <span class="text-sm">⚠️ 오프라인 모드 (로컬 전용)</span>
+                    `;
+                }
+                
+                console.log('🔗 Google Apps Script 연결 상태:', status);
+                
+            } catch (error) {
+                console.error('연결 상태 확인 실패:', error);
+                statusElement.innerHTML = `
+                    <i class="fas fa-times-circle mr-2 text-red-300"></i>
+                    <span class="text-sm">❌ 연결 확인 실패</span>
+                `;
+            }
+        }
+
+        async function openIntegrationGuide() {
+            // 연동 가이드 페이지 열기
+            window.open('./integration-guide.html', '_blank');
+        }
+
+        async function syncWithGoogleSheets() {
+            if (typeof window.attendanceAPI === 'undefined') {
+                alert('⚠️ API가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>동기화 중...';
+            button.disabled = true;
+
+            try {
+                const result = await window.attendanceAPI.syncWithGoogleSheets();
+                
+                if (result.success) {
+                    alert(`✅ ${result.message}\n\n동기화된 데이터: ${result.syncedCount || 0}건`);
+                    
+                    // 통계 업데이트
+                    updateStats();
+                } else {
+                    alert(`❌ ${result.message}`);
+                }
+                
+            } catch (error) {
+                console.error('동기화 실패:', error);
+                alert('❌ 동기화 중 오류가 발생했습니다.');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        async function triggerAutomation() {
+            if (typeof window.attendanceAPI === 'undefined') {
+                alert('⚠️ API가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>실행 중...';
+            button.disabled = true;
+
+            try {
+                const result = await window.attendanceAPI.triggerAutomation('processMissing');
+                
+                if (result.success) {
+                    alert(`🤖 ${result.message}\n\n${result.note || 'Google Apps Script에서 자동화 처리가 시작되었습니다.'}`);
+                } else {
+                    alert(`❌ ${result.message}`);
+                }
+                
+            } catch (error) {
+                console.error('자동화 실행 실패:', error);
+                alert('❌ 자동화 실행 중 오류가 발생했습니다.');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        function openSpreadsheet() {
+            // JJ 선생님의 구글 스프레드시트 직접 열기
+            const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dJEOyc59eZgwidKjXiYptgreAIabfBbkndN0g17Qsb8/edit';
+            window.open(spreadsheetUrl, '_blank');
+        }
+
+        // ========== 시스템 초기화 ==========
+
         window.onload = function() {
-            console.log('JJ 선생님 관리자 시스템 로드 완료');
+            console.log('🎓 JJ 선생님 관리자 시스템 v9.0 로드 완료');
+            console.log('🔗 Google Apps Script v8 연동 지원');
             document.getElementById('password').focus();
+            
+            // 연결 상태 자동 확인
+            setTimeout(checkConnection, 1000);
+            
+            // 주기적으로 연결 상태 확인 (5분마다)
+            setInterval(checkConnection, 300000);
         };
     </script>
 </body>
