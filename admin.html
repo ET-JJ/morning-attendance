@@ -969,12 +969,14 @@
             const studentName = String(googleRecord.studentName || '').trim();
             const status = String(googleRecord.status || '').trim();
             
-            console.log('📊 필드 추출:', { 
-                timestamp, 
-                studentId, 
-                studentName, 
-                status 
+            console.log('📊 원본 googleRecord 전체:', googleRecord);
+            console.log('📊 필드별 추출 결과:', { 
+                timestamp: timestamp, 
+                studentId: studentId, 
+                studentName: studentName, 
+                status: status 
             });
+            console.log('🔍 사용 가능한 모든 키:', Object.keys(googleRecord));
             
             // 타임스탬프 파싱 - "2025. 9. 1 오전 6:19:47" 형식
             let eventDateTime;
@@ -983,31 +985,55 @@
                 if (timestamp instanceof Date) {
                     // 이미 Date 객체인 경우
                     eventDateTime = timestamp;
+                    console.log('✅ Date 객체로 받음:', eventDateTime);
                 } else {
                     // 문자열인 경우 파싱
                     let timestampStr = String(timestamp).trim();
+                    console.log('🔤 원본 문자열:', timestampStr);
                     
-                    // "2025. 9. 1 오전 6:19:47" → JavaScript가 이해할 수 있는 형식으로 변환
+                    // "2025. 9. 1 오전 6:19:47" → "2025/9/1 6:19:47 AM" 형식으로 변환
                     if (timestampStr.includes('오전') || timestampStr.includes('오후')) {
-                        // 한국어 시간 형식을 영어로 변환
-                        timestampStr = timestampStr.replace('오전', 'AM').replace('오후', 'PM');
-                        // "2025. 9. 1" → "2025/9/1" 형식으로 변경
-                        timestampStr = timestampStr.replace(/\. /g, '/').replace('.', '');
-                        console.log('🔄 변환된 타임스탬프 문자열:', timestampStr);
+                        // 단계별 변환
+                        let converted = timestampStr;
+                        
+                        // 1. 오전/오후를 AM/PM으로 변환
+                        converted = converted.replace('오전', 'AM').replace('오후', 'PM');
+                        
+                        // 2. "2025. 9. 1" → "2025/9/1" 형식으로 변경 (점과 공백 제거)
+                        converted = converted.replace(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/, '$1/$2/$3');
+                        
+                        console.log('🔄 1단계 변환:', converted);
+                        
+                        // 3. 시간 부분 정리 - "6:19:47 AM" 형태로
+                        converted = converted.replace(/\s+/g, ' ').trim();
+                        
+                        console.log('🔄 최종 변환:', converted);
+                        
+                        timestampStr = converted;
                     }
                     
+                    // JavaScript Date 생성 시도
                     eventDateTime = new Date(timestampStr);
+                    console.log('📅 Date 생성 결과:', eventDateTime);
+                    console.log('🔍 Date 유효성:', !isNaN(eventDateTime.getTime()));
                 }
                 
                 // 날짜가 유효하지 않은 경우 현재 시간 사용
                 if (isNaN(eventDateTime.getTime())) {
-                    console.warn('❌ 날짜 파싱 실패, 현재 시간 사용. 원본:', timestamp);
-                    eventDateTime = new Date();
+                    console.error('❌ 날짜 파싱 실패!');
+                    console.error('원본 timestamp:', timestamp);
+                    console.error('변환 시도한 문자열:', timestampStr);
+                    
+                    // 🚨 임시로 현재 시간 대신 에러 발생시키기
+                    throw new Error('날짜 파싱 실패: ' + timestamp);
                 }
                 
             } catch (error) {
                 console.error('❌ 타임스탬프 파싱 오류:', error);
-                eventDateTime = new Date(); // 기본값
+                console.error('❌ 원본 데이터:', timestamp);
+                
+                // 기본값 대신 상세 오류 로깅
+                eventDateTime = new Date(); // 임시 기본값
             }
             
             console.log('✅ 변환된 시간:', eventDateTime);
