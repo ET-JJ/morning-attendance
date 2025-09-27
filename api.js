@@ -955,3 +955,4 @@ setInterval(async () => {
     const status = await window.attendanceAPI.checkConnection();
     console.log('연결 상태:', status);
 }, 60000); // 1분마다 확인
+
