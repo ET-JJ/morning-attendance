@@ -864,6 +864,15 @@
 
                 const googleData = result.data || [];
                 console.log(`📊 구글 시트에서 ${googleData.length}건의 데이터를 조회했습니다.`);
+                
+                // 🔍 실제 구글 데이터 구조 확인 (처음 3개만)
+                console.log('🔍 구글 시트 원본 데이터 샘플:');
+                googleData.slice(0, 3).forEach((record, index) => {
+                    console.log(`Record ${index + 1}:`, record);
+                    console.log(`- checkIn 타입:`, typeof record.checkIn, ' 값:', record.checkIn);
+                    console.log(`- checkOut 타입:`, typeof record.checkOut, '값:', record.checkOut);
+                    console.log(`- date 타입:`, typeof record.date, '값:', record.date);
+                });
 
                 if (googleData.length === 0) {
                     alert('📭 구글 스프레드시트에 가져올 데이터가 없습니다.');
@@ -885,16 +894,19 @@
                 let skippedCount = 0;
 
                 googleData.forEach(googleRecord => {
-                    const localRecord = convertGoogleToLocalFormat(googleRecord);
-                    const key = generateLocalUniqueKey(localRecord);
+                    const localRecords = convertGoogleToLocalFormat(googleRecord); // 배열로 반환됨
+                    
+                    localRecords.forEach(localRecord => {
+                        const key = generateLocalUniqueKey(localRecord);
 
-                    if (!existingKeys.has(key)) {
-                        existingData.push(localRecord);
-                        existingKeys.add(key);
-                        importedCount++;
-                    } else {
-                        skippedCount++;
-                    }
+                        if (!existingKeys.has(key)) {
+                            existingData.push(localRecord);
+                            existingKeys.add(key);
+                            importedCount++;
+                        } else {
+                            skippedCount++;
+                        }
+                    });
                 });
 
                 // 날짜순 정렬
@@ -937,41 +949,91 @@
             }
         }
 
-        // 구글 데이터를 로컬 형식으로 변환
+        // 🎯 JJ 선생님 구글 시트 데이터 변환 (올바른 구조 - 각 행이 개별 이벤트)
         function convertGoogleToLocalFormat(googleRecord) {
-            const timestamp = new Date(googleRecord.date);
+            console.log('🔄 구글 시트 원본 레코드 변환:', googleRecord);
             
-            return {
+            // JJ 선생님 데이터는 각 행이 개별 입실/퇴실 이벤트
+            // 필드명 확인: timestamp, 학번, 이름, 상태
+            
+            let timestamp = googleRecord.timestamp || googleRecord.타임스탬프 || googleRecord['타임스탬프'];
+            let studentId = googleRecord.studentId || googleRecord['학번'] || googleRecord.student_id;
+            let studentName = googleRecord.studentName || googleRecord['이름'] || googleRecord.student_name;
+            let status = googleRecord.status || googleRecord['상태'] || googleRecord.action;
+            
+            console.log('📊 필드 추출:', { timestamp, studentId, studentName, status });
+            
+            // 타임스탬프 파싱 - "2025. 9. 1 오전 6:19:47" 형식
+            let eventDateTime;
+            
+            if (timestamp) {
+                try {
+                    // 한국어 날짜 형식 파싱
+                    let timestampStr = String(timestamp).trim();
+                    
+                    // "2025. 9. 1 오전 6:19:47" → JavaScript Date 파싱 가능한 형식으로 변환
+                    if (timestampStr.includes('오전') || timestampStr.includes('오후')) {
+                        // 한국어 시간 형식을 영어로 변환
+                        timestampStr = timestampStr.replace('오전', 'AM').replace('오후', 'PM');
+                        // "2025. 9. 1" → "2025/9/1" 형식으로 변경
+                        timestampStr = timestampStr.replace(/\. /g, '/').replace('.', '');
+                        console.log('🔄 변환된 타임스탬프:', timestampStr);
+                        
+                        eventDateTime = new Date(timestampStr);
+                    } else {
+                        // 일반적인 날짜 형식으로 시도
+                        eventDateTime = new Date(timestampStr);
+                    }
+                    
+                    // 날짜가 유효하지 않은 경우 대체
+                    if (isNaN(eventDateTime.getTime())) {
+                        console.warn('❌ 날짜 파싱 실패, 현재 시간 사용');
+                        eventDateTime = new Date();
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ 타임스탬프 파싱 오류:', error);
+                    eventDateTime = new Date(); // 기본값
+                }
+            } else {
+                console.warn('⚠️ 타임스탬프 필드가 없음, 현재 시간 사용');
+                eventDateTime = new Date();
+            }
+            
+            console.log('✅ 최종 변환된 시간:', eventDateTime);
+            
+            // 단일 레코드 생성 (각 행이 이미 개별 이벤트이므로)
+            const record = {
                 id: generateId(),
-                studentId: googleRecord.studentId,
-                studentName: googleRecord.studentName,
-                status: googleRecord.checkIn ? '입실' : '퇴실', // 임시로 입실로 처리, 실제로는 더 정교한 로직 필요
-                timestamp: timestamp.toISOString(),
+                studentId: String(studentId || ''),
+                studentName: String(studentName || ''),
+                status: String(status || '입실'), // 기본값 입실
+                timestamp: eventDateTime.toISOString(),
                 submittedAt: new Date().toISOString(),
                 source: 'imported_from_google_sheets',
                 googleData: {
-                    checkIn: googleRecord.checkIn,
-                    checkOut: googleRecord.checkOut,
-                    studyTime: googleRecord.studyTime
+                    originalTimestamp: timestamp,
+                    originalStudentId: studentId,
+                    originalStudentName: studentName,
+                    originalStatus: status,
+                    convertedDateTime: eventDateTime.toISOString(),
+                    rawRecord: googleRecord
                 }
             };
+            
+            console.log('🎯 변환 완료된 레코드:', record);
+            
+            return [record]; // 배열로 반환 (단일 레코드)
         }
 
         // 로컬 데이터용 고유 키 생성
         function generateLocalUniqueKey(record) {
             const date = new Date(record.timestamp).toISOString().split('T')[0];
             const studentId = record.studentId;
+            const time = new Date(record.timestamp).toTimeString().split(' ')[0].substring(0, 5); // HH:mm 형식
+            const status = record.status;
             
-            // Google 데이터인 경우 특별 처리
-            if (record.googleData) {
-                const checkIn = String(record.googleData.checkIn || '').replace(/'/g, '').trim();
-                const checkOut = String(record.googleData.checkOut || '').replace(/'/g, '').trim();
-                return `${date}_${studentId}_${checkIn}_${checkOut}`;
-            }
-            
-            // 일반 로컬 데이터인 경우
-            const time = new Date(record.timestamp).toTimeString().split(' ')[0];
-            return `${date}_${studentId}_${record.status}_${time}`;
+            return `${date}_${studentId}_${status}_${time}`;
         }
 
         // ID 생성 헬퍼 함수
