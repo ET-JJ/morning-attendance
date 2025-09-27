@@ -204,12 +204,6 @@
                     <div class="text-xs opacity-90">오늘 로컬 기록만 삭제</div>
                 </button>
                 
-                <button onclick="deleteTestData()" class="bg-yellow-500 hover:bg-yellow-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
-                    <i class="fas fa-broom text-xl mb-2 block"></i>
-                    <div class="font-semibold">테스트 데이터 삭제</div>
-                    <div class="text-xs opacity-90">김광영, 박영희 테스트 기록</div>
-                </button>
-
                 <button onclick="deleteAll()" class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl btn-hover transition-all text-left">
                     <i class="fas fa-trash text-xl mb-2 block"></i>
                     <div class="font-semibold">로컬 데이터 삭제</div>
@@ -497,46 +491,6 @@
             
             updateStats();
             alert('오늘 데이터 ' + todayCount + '개가 삭제되었습니다!');
-        }
-
-        // 🧹 테스트 데이터만 선별 삭제
-        function deleteTestData() {
-            const allData = getData();
-            const testData = allData.filter(item => item.source === 'test_data');
-            const realData = allData.filter(item => item.source !== 'test_data');
-            
-            if (testData.length === 0) {
-                alert('🔍 삭제할 테스트 데이터가 없습니다.\n\n현재 모든 데이터가 실제 출석 기록입니다.');
-                return;
-            }
-            
-            // 테스트 데이터 내용 표시
-            const testStudents = [...new Set(testData.map(item => item.studentName))];
-            const message = `🧹 테스트 데이터 삭제\n\n` +
-                          `삭제될 테스트 학생: ${testStudents.join(', ')}\n` +
-                          `삭제될 기록: ${testData.length}건\n` +
-                          `남을 실제 기록: ${realData.length}건\n\n` +
-                          `정말로 테스트 데이터를 삭제하시겠습니까?`;
-            
-            if (!confirm(message)) {
-                return;
-            }
-            
-            // 실제 데이터만 남기고 저장
-            localStorage.setItem('attendanceData', JSON.stringify(realData));
-            
-            // 화면 새로고침
-            if (currentView === 'all') showAll();
-            else if (currentView === 'today') showToday();
-            else if (currentView === 'student') showByStudent();
-            
-            updateStats();
-            
-            // 결과 메시지
-            alert(`✅ 테스트 데이터 삭제 완료!\n\n` +
-                  `🗑️ 삭제된 기록: ${testData.length}건\n` +
-                  `📊 남은 실제 기록: ${realData.length}건\n\n` +
-                  `이제 실제 출석 데이터만 표시됩니다.`);
         }
 
         function deleteAll() {
@@ -1435,9 +1389,30 @@
 
         // ========== 시스템 초기화 ==========
 
+        // 🧹 테스트 데이터 자동 정리 함수
+        function cleanupTestData() {
+            try {
+                const allData = getData();
+                const realData = allData.filter(item => item.source !== 'test_data');
+                const testData = allData.filter(item => item.source === 'test_data');
+                
+                if (testData.length > 0) {
+                    console.log('🧹 admin: 기존 테스트 데이터 자동 정리:', testData.length + '건');
+                    localStorage.setItem('attendanceData', JSON.stringify(realData));
+                    console.log('✅ admin: 테스트 데이터 정리 완료, 실제 데이터:', realData.length + '건');
+                }
+            } catch (error) {
+                console.warn('⚠️ admin: 테스트 데이터 정리 실패:', error);
+            }
+        }
+
         window.onload = function() {
             console.log('🎓 JJ 선생님 관리자 시스템 v9.0 로드 완료');
             console.log('🔗 Google Apps Script v8 연동 지원');
+            
+            // 🆕 테스트 데이터 자동 정리
+            cleanupTestData();
+            
             document.getElementById('password').focus();
             
             // 연결 상태 자동 확인
