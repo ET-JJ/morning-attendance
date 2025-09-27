@@ -122,95 +122,22 @@
         <div class="flex justify-center">
             <div class="w-full max-w-4xl">
                 <div id="student-stats" class="hidden space-y-8">
-            <!-- 학생 정보 헤더 -->
-            <div class="glass-effect rounded-xl p-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
-                            <span id="student-initial" class="text-white text-xl font-bold">학</span>
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-900" id="student-info">김학생 (20101)</h2>
-                            <p class="text-black">광영여자고등학교 2학년</p>
-                        </div>
-                    </div>
-                    <button onclick="resetSearch()" class="text-black hover:text-gray-800">
-                        <i class="fas fa-search mr-1"></i>다시 검색
-                    </button>
-                </div>
-            </div>
 
-            <!-- 주요 통계 카드들 -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <!-- 총 출석일수 -->
-                <div class="glass-effect rounded-xl p-6 stats-card">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-sm font-medium text-black">총 출석일수</h3>
-                            <p class="text-2xl font-bold text-gray-900" id="total-days">0</p>
-                            <p class="text-sm text-blue-600">일</p>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 누적 학습시간 -->
-                <div class="glass-effect rounded-xl p-6 stats-card">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-clock text-green-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-sm font-medium text-black">누적 학습시간</h3>
-                            <p class="text-2xl font-bold text-gray-900" id="total-study-time">0</p>
-                            <p class="text-sm text-green-600">분</p>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 평균 학습시간 -->
-                <div class="glass-effect rounded-xl p-6 stats-card">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-chart-line text-purple-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-sm font-medium text-black">평균 학습시간</h3>
-                            <p class="text-2xl font-bold text-gray-900" id="avg-study-time">0</p>
-                            <p class="text-sm text-purple-600">분</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 출석률 -->
-                <div class="glass-effect rounded-xl p-6 stats-card">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-percentage text-yellow-600 text-xl"></i>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-sm font-medium text-black">출석률</h3>
-                            <p class="text-2xl font-bold text-gray-900" id="attendance-rate">0</p>
-                            <p class="text-sm text-yellow-600">%</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- 학습 통계 배너들 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- 총 출석일수 -->
                 <div class="glass-effect rounded-xl p-6">
                     <div class="flex items-center">
-                        <div class="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                            <i class="fas fa-calendar-check text-blue-600 text-2xl"></i>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-calendar-check text-blue-600 text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-medium text-black">총 출석일수</h3>
-                            <p class="text-3xl font-bold text-gray-900" id="stats-total-days">0</p>
-                            <p class="text-sm text-blue-600">일</p>
+                            <h3 class="text-sm font-medium text-black">총 출석일수</h3>
+                            <p class="text-xl font-bold text-gray-900" id="stats-total-days">0</p>
+                            <p class="text-xs text-blue-600">일</p>
                         </div>
                     </div>
                 </div>
@@ -218,13 +145,13 @@
                 <!-- 누적 학습시간 -->
                 <div class="glass-effect rounded-xl p-6">
                     <div class="flex items-center">
-                        <div class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                            <i class="fas fa-clock text-green-600 text-2xl"></i>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-clock text-green-600 text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-medium text-black">누적 학습시간</h3>
-                            <p class="text-3xl font-bold text-gray-900" id="stats-total-time">0분</p>
-                            <p class="text-sm text-green-600">분</p>
+                            <h3 class="text-sm font-medium text-black">누적 학습시간</h3>
+                            <p class="text-xl font-bold text-gray-900" id="stats-total-time">0분</p>
+                            <p class="text-xs text-green-600">분</p>
                         </div>
                     </div>
                 </div>
@@ -232,13 +159,13 @@
                 <!-- 평균 학습시간 -->
                 <div class="glass-effect rounded-xl p-6">
                     <div class="flex items-center">
-                        <div class="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                            <i class="fas fa-chart-line text-purple-600 text-2xl"></i>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-chart-line text-purple-600 text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-medium text-black">평균 학습시간</h3>
-                            <p class="text-3xl font-bold text-gray-900" id="stats-avg-time">0분</p>
-                            <p class="text-sm text-purple-600">분</p>
+                            <h3 class="text-sm font-medium text-black">평균 학습시간</h3>
+                            <p class="text-xl font-bold text-gray-900" id="stats-avg-time">0분</p>
+                            <p class="text-xs text-purple-600">분</p>
                         </div>
                     </div>
                 </div>
@@ -296,7 +223,13 @@
             <!-- 학습 목표 및 격려 -->
             <div class="glass-effect rounded-xl p-6 text-center">
                 <div id="encouragement-section">
-                    <i class="fas fa-star text-yellow-500 text-3xl mb-4"></i>
+                    <div class="flex justify-between items-center mb-4">
+                        <div></div>
+                        <i class="fas fa-star text-yellow-500 text-3xl"></i>
+                        <button onclick="resetSearch()" class="text-sm text-gray-500 hover:text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-100">
+                            <i class="fas fa-search mr-1"></i>다시 검색
+                        </button>
+                    </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">훌륭해요! 🎉</h3>
                     <p class="text-gray-600 mb-4" id="encouragement-text">꾸준한 아침자습으로 실력을 쌓고 있어요!</p>
                     <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4">
@@ -471,8 +404,7 @@
             
             // 학생 정보 설정
             const studentName = records[0].studentName;
-            document.getElementById('student-info').textContent = `${studentName} (${currentStudentId})`;
-            document.getElementById('student-initial').textContent = studentName.charAt(0);
+            // 학생 정보 헤더 제거됨 - 필요시 여기에 추가 정보 처리
             
             // 일별 데이터 집계
             const dailyData = aggregateDailyData(records);
@@ -570,7 +502,7 @@
 
         // 통계 표시 업데이트
         function updateStatsDisplay(stats) {
-            // 기존 개별 통계 카드들은 제거되었으므로 성취 배지 내 통계만 업데이트
+            // 통계 업데이트는 updateAchievements에서 처리
         }
 
         // 학습 통계 업데이트
