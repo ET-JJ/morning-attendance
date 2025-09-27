@@ -68,9 +68,7 @@
     <!-- 메인 컨텐츠 -->
     <main class="max-w-6xl mx-auto px-4 pb-8">
         <!-- 학번 입력 폼 -->
-        <div class="flex justify-center mb-8">
-            <div class="w-full max-w-2xl">
-                <div id="search-section" class="glass-effect rounded-2xl shadow-2xl p-6">
+        <div id="search-section" class="glass-effect rounded-2xl shadow-2xl p-6 mb-8">
                     <div class="text-center mb-6">
                         <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="fas fa-search text-white text-2xl"></i>
@@ -98,8 +96,6 @@
                         </div>
                         <div class="text-xs text-black mt-2 text-center">5자리 학번을 정확히 입력해주세요</div>
                     </div>
-                </div>
-            </div>
         </div>
 
         <!-- 학생 정보가 없을 때 -->
@@ -119,9 +115,13 @@
         </div>
 
         <!-- 학생 개인 통계 (조회 후 표시) -->
-        <div class="flex justify-center">
-            <div class="w-full max-w-4xl">
                 <div id="student-stats" class="hidden space-y-8">
+            
+            <!-- 학생 정보 간단 헤더 -->
+            <div class="glass-effect rounded-xl p-4 text-center">
+                <h2 class="text-xl font-bold text-gray-900" id="student-info">김학생 (20101)</h2>
+                <p class="text-sm text-gray-600">광영여자고등학교 아침자습 기록</p>
+            </div>
 
 
 
@@ -235,8 +235,6 @@
                     <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4">
                         <p class="text-sm text-gray-700" id="next-goal">다음 목표: 30일 출석 달성까지 5일 남았어요!</p>
                     </div>
-                </div>
-            </div>
                 </div>
             </div>
         </div>
@@ -404,7 +402,8 @@
             
             // 학생 정보 설정
             const studentName = records[0].studentName;
-            // 학생 정보 헤더 제거됨 - 필요시 여기에 추가 정보 처리
+            // 학생 정보 헤더 업데이트
+            document.getElementById('student-info').textContent = `${studentName} (${currentStudentId})`;
             
             // 일별 데이터 집계
             const dailyData = aggregateDailyData(records);
