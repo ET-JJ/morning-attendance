@@ -215,6 +215,28 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- 페이지네이션 -->
+                <div id="pagination-container" class="hidden mt-6 flex justify-center">
+                    <div class="flex items-center space-x-2">
+                        <button id="prev-page" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-chevron-left mr-1"></i>이전
+                        </button>
+                        
+                        <div id="page-numbers" class="flex space-x-1">
+                            <!-- 동적으로 생성될 페이지 번호들 -->
+                        </div>
+                        
+                        <button id="next-page" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            다음<i class="fas fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 총 기록 수 표시 -->
+                <div id="records-info" class="hidden mt-2 text-center text-sm text-gray-500">
+                    총 <span id="total-records">0</span>개 기록 중 <span id="current-range">1-10</span>개 표시
+                </div>
             </div>
 
             <!-- 학습 목표 및 격려 -->
@@ -624,12 +646,50 @@
             });
         }
 
-        // 최근 기록 업데이트
+        // 페이지네이션 변수들
+        let currentPage = 1;
+        let recordsPerPage = 10;
+        let allRecords = [];
+
+        // 전체 출결 기록 업데이트 (페이지네이션 포함)
         function updateRecentRecords(dailyData) {
-            const recentRecords = dailyData.slice(0, 10); // 최근 10일
+            allRecords = dailyData; // 전체 데이터 저장
+            
+            // 페이지네이션 표시/숨김 결정
+            if (allRecords.length <= recordsPerPage) {
+                document.getElementById('pagination-container').classList.add('hidden');
+                document.getElementById('records-info').classList.add('hidden');
+            } else {
+                document.getElementById('pagination-container').classList.remove('hidden');
+                document.getElementById('records-info').classList.remove('hidden');
+            }
+            
+            // 첫 페이지로 리셋
+            currentPage = 1;
+            renderRecordsPage();
+            renderPagination();
+        }
+
+        // 특정 페이지의 기록들 렌더링
+        function renderRecordsPage() {
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = startIndex + recordsPerPage;
+            const pageRecords = allRecords.slice(startIndex, endIndex);
+            
             const tbody = document.getElementById('recent-records');
             
-            tbody.innerHTML = recentRecords.map(day => {
+            if (pageRecords.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                            출결 기록이 없습니다.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = pageRecords.map(day => {
                 const checkInTime = day.checkIn ? new Date(day.checkIn.timestamp).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) : '-';
                 const checkOutTime = day.checkOut ? new Date(day.checkOut.timestamp).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'}) : '-';
                 const studyTimeText = day.studyTime > 0 ? `${day.studyTime}분` : '-';
@@ -661,7 +721,91 @@
                     </tr>
                 `;
             }).join('');
+            
+            // 기록 수 정보 업데이트
+            updateRecordsInfo();
         }
+
+        // 페이지네이션 버튼들 렌더링
+        function renderPagination() {
+            const totalPages = Math.ceil(allRecords.length / recordsPerPage);
+            
+            if (totalPages <= 1) return;
+            
+            const pageNumbers = document.getElementById('page-numbers');
+            const prevButton = document.getElementById('prev-page');
+            const nextButton = document.getElementById('next-page');
+            
+            // 이전 버튼 상태
+            prevButton.disabled = currentPage === 1;
+            
+            // 다음 버튼 상태  
+            nextButton.disabled = currentPage === totalPages;
+            
+            // 페이지 번호 버튼들 생성
+            let pageButtonsHTML = '';
+            
+            // 페이지 범위 계산 (현재 페이지 앞뒤 2개씩 표시)
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            
+            // 첫 페이지 표시
+            if (startPage > 1) {
+                pageButtonsHTML += `<button onclick="goToPage(1)" class="px-3 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50 ${currentPage === 1 ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-500 bg-white'}">1</button>`;
+                if (startPage > 2) {
+                    pageButtonsHTML += `<span class="px-2 py-2 text-gray-500">...</span>`;
+                }
+            }
+            
+            // 중간 페이지들 표시
+            for (let i = startPage; i <= endPage; i++) {
+                pageButtonsHTML += `<button onclick="goToPage(${i})" class="px-3 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50 ${currentPage === i ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-500 bg-white'}">${i}</button>`;
+            }
+            
+            // 마지막 페이지 표시
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    pageButtonsHTML += `<span class="px-2 py-2 text-gray-500">...</span>`;
+                }
+                pageButtonsHTML += `<button onclick="goToPage(${totalPages})" class="px-3 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50 ${currentPage === totalPages ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-500 bg-white'}">${totalPages}</button>`;
+            }
+            
+            pageNumbers.innerHTML = pageButtonsHTML;
+        }
+
+        // 페이지 이동 함수
+        function goToPage(page) {
+            const totalPages = Math.ceil(allRecords.length / recordsPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            renderRecordsPage();
+            renderPagination();
+        }
+
+        // 기록 수 정보 업데이트
+        function updateRecordsInfo() {
+            const totalRecords = allRecords.length;
+            const startRecord = (currentPage - 1) * recordsPerPage + 1;
+            const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
+            
+            document.getElementById('total-records').textContent = totalRecords;
+            document.getElementById('current-range').textContent = `${startRecord}-${endRecord}`;
+        }
+
+        // 이전/다음 버튼 이벤트 리스너
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentPage > 1) {
+                goToPage(currentPage - 1);
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            const totalPages = Math.ceil(allRecords.length / recordsPerPage);
+            if (currentPage < totalPages) {
+                goToPage(currentPage + 1);
+            }
+        });
 
         // 격려 메시지 업데이트
         function updateEncouragement(stats) {
