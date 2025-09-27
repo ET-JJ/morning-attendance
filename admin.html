@@ -1149,7 +1149,7 @@
                 console.log('🔍 첫 번째 레코드 샘플:', attendanceData[0]);
                 
                 // Google Apps Script로 데이터 전송
-                const response = await fetch('https://script.google.com/macros/s/AKfycbxBZekl8Dx9LGDHCEz9_-U8Mm5R0Qo0aj3VJWOxgavIPE1KGF8KWJR17Wf9BdcrDKsT/exec', {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbway641X2eskkkpRAw36Yde059Vcto9Oqr6ezRx5969FzO912cZsOKlOrAvbUkfSXWZMA/exec', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1231,7 +1231,7 @@
                     const beforeCount = JSON.parse(localStorage.getItem('attendanceData') || '[]').length;
                     
                     // Google Sheets 데이터 가져오기
-                    const response1 = await fetch('https://script.google.com/macros/s/AKfycbxBZekl8Dx9LGDHCEz9_-U8Mm5R0Qo0aj3VJWOxgavIPE1KGF8KWJR17Wf9BdcrDKsT/exec?action=getAllAttendance');
+                    const response1 = await fetch('https://script.google.com/macros/s/AKfycbway641X2eskkkpRAw36Yde059Vcto9Oqr6ezRx5969FzO912cZsOKlOrAvbUkfSXWZMA/exec?action=getAllAttendance');
                     
                     if (!response1.ok) {
                         throw new Error(`Google Sheets 조회 실패: ${response1.status}`);
@@ -1300,7 +1300,7 @@
                     const attendanceData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
                     
                     if (attendanceData.length > 0) {
-                        const response2 = await fetch('https://script.google.com/macros/s/AKfycbxBZekl8Dx9LGDHCEz9_-U8Mm5R0Qo0aj3VJWOxgavIPE1KGF8KWJR17Wf9BdcrDKsT/exec', {
+                        const response2 = await fetch('https://script.google.com/macros/s/AKfycbway641X2eskkkpRAw36Yde059Vcto9Oqr6ezRx5969FzO912cZsOKlOrAvbUkfSXWZMA/exec', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
