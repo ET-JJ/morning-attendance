@@ -889,22 +889,30 @@
                     existingKeys.add(key);
                 });
 
-                // 중복 제거하며 새 데이터 추가
+                // 🔍 디버깅을 위해 중복 제거 로직 수정
                 let importedCount = 0;
                 let skippedCount = 0;
 
-                googleData.forEach(googleRecord => {
+                // 🚨 임시로 중복 제거 완전히 비활성화하여 디버깅
+                googleData.forEach((googleRecord, index) => {
+                    if (index < 5) { // 처음 5개만 자세히 로그
+                        console.log(`🔄 처리 중 ${index + 1}/${googleData.length}:`, googleRecord);
+                    }
+                    
                     const localRecords = convertGoogleToLocalFormat(googleRecord); // 배열로 반환됨
                     
                     localRecords.forEach(localRecord => {
-                        const key = generateLocalUniqueKey(localRecord);
-
-                        if (!existingKeys.has(key)) {
-                            existingData.push(localRecord);
-                            existingKeys.add(key);
-                            importedCount++;
-                        } else {
-                            skippedCount++;
+                        // 중복 제거 없이 모든 데이터 추가
+                        existingData.push(localRecord);
+                        importedCount++;
+                        
+                        if (index < 5) { // 처음 5개만 자세히 로그
+                            const key = generateLocalUniqueKey(localRecord);
+                            console.log('🔑 생성된 고유 키:', key);
+                            console.log('📅 변환된 시간:', localRecord.timestamp);
+                            console.log('🕐 실제 시간 객체:', new Date(localRecord.timestamp));
+                            console.log('👤 학생정보:', localRecord.studentName, localRecord.status);
+                            console.log('✅ 데이터 추가 완료\n');
                         }
                     });
                 });
@@ -920,11 +928,11 @@
                 showAll();
 
                 // 결과 알림
-                let message = `✅ 구글 스프레드시트 데이터 가져오기 완료!\n\n`;
+                let message = `🚨 디버깅 모드: 중복 제거 비활성화\n\n`;
                 message += `📊 총 조회: ${googleData.length}건\n`;
-                message += `➕ 새로 추가: ${importedCount}건\n`;
-                message += `⏭️ 중복 제외: ${skippedCount}건\n\n`;
-                message += `📱 현재 웹시스템 총 데이터: ${existingData.length}건`;
+                message += `➕ 모두 추가: ${importedCount}건\n`;
+                message += `📱 현재 웹시스템 총 데이터: ${existingData.length}건\n\n`;
+                message += `🔍 F12 콘솔에서 변환 과정을 확인하세요!`;
 
                 alert(message);
 
@@ -949,65 +957,67 @@
             }
         }
 
-        // 🎯 JJ 선생님 구글 시트 데이터 변환 (올바른 구조 - 각 행이 개별 이벤트)
+        // 🎯 JJ 선생님 구글 시트 데이터 변환 (정확한 구조 - 각 행이 개별 이벤트)
         function convertGoogleToLocalFormat(googleRecord) {
             console.log('🔄 구글 시트 원본 레코드 변환:', googleRecord);
             
-            // JJ 선생님 데이터는 각 행이 개별 입실/퇴실 이벤트
-            // 필드명 확인: timestamp, 학번, 이름, 상태
+            // JJ 선생님 실제 구조: { timestamp, studentId, studentName, status }
+            // 각 행이 개별 입실/퇴실 이벤트
             
-            let timestamp = googleRecord.timestamp || googleRecord.타임스탬프 || googleRecord['타임스탬프'];
-            let studentId = googleRecord.studentId || googleRecord['학번'] || googleRecord.student_id;
-            let studentName = googleRecord.studentName || googleRecord['이름'] || googleRecord.student_name;
-            let status = googleRecord.status || googleRecord['상태'] || googleRecord.action;
+            const timestamp = googleRecord.timestamp;
+            const studentId = String(googleRecord.studentId || '').trim();
+            const studentName = String(googleRecord.studentName || '').trim();
+            const status = String(googleRecord.status || '').trim();
             
-            console.log('📊 필드 추출:', { timestamp, studentId, studentName, status });
+            console.log('📊 필드 추출:', { 
+                timestamp, 
+                studentId, 
+                studentName, 
+                status 
+            });
             
             // 타임스탬프 파싱 - "2025. 9. 1 오전 6:19:47" 형식
             let eventDateTime;
             
-            if (timestamp) {
-                try {
-                    // 한국어 날짜 형식 파싱
+            try {
+                if (timestamp instanceof Date) {
+                    // 이미 Date 객체인 경우
+                    eventDateTime = timestamp;
+                } else {
+                    // 문자열인 경우 파싱
                     let timestampStr = String(timestamp).trim();
                     
-                    // "2025. 9. 1 오전 6:19:47" → JavaScript Date 파싱 가능한 형식으로 변환
+                    // "2025. 9. 1 오전 6:19:47" → JavaScript가 이해할 수 있는 형식으로 변환
                     if (timestampStr.includes('오전') || timestampStr.includes('오후')) {
                         // 한국어 시간 형식을 영어로 변환
                         timestampStr = timestampStr.replace('오전', 'AM').replace('오후', 'PM');
                         // "2025. 9. 1" → "2025/9/1" 형식으로 변경
                         timestampStr = timestampStr.replace(/\. /g, '/').replace('.', '');
-                        console.log('🔄 변환된 타임스탬프:', timestampStr);
-                        
-                        eventDateTime = new Date(timestampStr);
-                    } else {
-                        // 일반적인 날짜 형식으로 시도
-                        eventDateTime = new Date(timestampStr);
+                        console.log('🔄 변환된 타임스탬프 문자열:', timestampStr);
                     }
                     
-                    // 날짜가 유효하지 않은 경우 대체
-                    if (isNaN(eventDateTime.getTime())) {
-                        console.warn('❌ 날짜 파싱 실패, 현재 시간 사용');
-                        eventDateTime = new Date();
-                    }
-                    
-                } catch (error) {
-                    console.error('❌ 타임스탬프 파싱 오류:', error);
-                    eventDateTime = new Date(); // 기본값
+                    eventDateTime = new Date(timestampStr);
                 }
-            } else {
-                console.warn('⚠️ 타임스탬프 필드가 없음, 현재 시간 사용');
-                eventDateTime = new Date();
+                
+                // 날짜가 유효하지 않은 경우 현재 시간 사용
+                if (isNaN(eventDateTime.getTime())) {
+                    console.warn('❌ 날짜 파싱 실패, 현재 시간 사용. 원본:', timestamp);
+                    eventDateTime = new Date();
+                }
+                
+            } catch (error) {
+                console.error('❌ 타임스탬프 파싱 오류:', error);
+                eventDateTime = new Date(); // 기본값
             }
             
-            console.log('✅ 최종 변환된 시간:', eventDateTime);
+            console.log('✅ 변환된 시간:', eventDateTime);
             
-            // 단일 레코드 생성 (각 행이 이미 개별 이벤트이므로)
+            // 단일 레코드 생성 (각 행이 이미 개별 이벤트)
             const record = {
                 id: generateId(),
-                studentId: String(studentId || ''),
-                studentName: String(studentName || ''),
-                status: String(status || '입실'), // 기본값 입실
+                studentId: studentId,
+                studentName: studentName,
+                status: status || '입실', // 기본값 입실
                 timestamp: eventDateTime.toISOString(),
                 submittedAt: new Date().toISOString(),
                 source: 'imported_from_google_sheets',
