@@ -6,7 +6,7 @@
 class AttendanceAPI {
     constructor() {
         // 🆕 JJ 선생님의 Google Apps Script URL 자동 설정
-        this.webAppUrl = localStorage.getItem('WEBAPP_URL') || 'https://script.google.com/macros/s/AKfycbz9R4xubGpza4STDYYhc7dycb-L0H5Yl_sXK5w0FiusxbR-jUR8ZB2R2BGyK1ssCf42OA/exec';
+        this.webAppUrl = localStorage.getItem('WEBAPP_URL') || 'https://script.google.com/macros/s/AKfycbway641X2eskkkpRAw36Yde059Vcto9Oqr6ezRx5969FzO912cZsOKlOrAvbUkfSXWZMA/exec';
         this.isOnlineMode = true; // 항상 온라인 모드로 설정
         
         // URL이 설정되지 않았다면 자동으로 저장
@@ -212,7 +212,7 @@ class AttendanceAPI {
             
             console.log('📡 Google Apps Script 요청 시도...');
             
-            const response = await fetch(`https://script.google.com/macros/s/AKfycbxBZekl8Dx9LGDHCEz9_-U8Mm5R0Qo0aj3VJWOxgavIPE1KGF8KWJR17Wf9BdcrDKsT/exec?${params}`);
+            const response = await fetch(`${this.webAppUrl}?${params}`);
 
             console.log('📡 응답 상태:', response.status, response.statusText);
             
@@ -955,4 +955,3 @@ setInterval(async () => {
     const status = await window.attendanceAPI.checkConnection();
     console.log('연결 상태:', status);
 }, 60000); // 1분마다 확인
-
