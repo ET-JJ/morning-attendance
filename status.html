@@ -926,7 +926,7 @@
 
         // API 없이 직접 모드로 시작
         function startAppWithoutAPI() {
-            console.log('🎯 직접 모드로 앱 시작');
+            console.log('🎯 직접 모드로 앱 시작 - 실제 데이터만 조회');
             
             // 연결 상태를 로컬 모드로 설정
             const indicator = document.getElementById('status-indicator');
@@ -934,71 +934,11 @@
             indicator.className = 'w-2 h-2 bg-yellow-400 rounded-full pulse-dot mr-1';
             text.textContent = '직접 모드';
             
-            // 직접 데이터 로드
-            loadAttendanceDataDirect();
+            // 🆕 테스트 데이터 없이 실제 데이터 로드 시도
+            loadAttendanceData();
         }
 
-        // API 없이 직접 데이터 로드
-        async function loadAttendanceDataDirect() {
-            console.log('📊 직접 모드로 데이터 로드');
-            
-            // 테스트 데이터 생성
-            const testData = [
-                {
-                    id: 'test1',
-                    studentId: '12345',
-                    studentName: '김광영',
-                    status: '입실',
-                    timestamp: '2025-09-27T06:30:00.000Z',
-                    source: 'test_data'
-                },
-                {
-                    id: 'test2', 
-                    studentId: '12345',
-                    studentName: '김광영', 
-                    status: '퇴실',
-                    timestamp: '2025-09-27T07:45:00.000Z',
-                    source: 'test_data'
-                },
-                {
-                    id: 'test3',
-                    studentId: '23456',
-                    studentName: '박영희',
-                    status: '입실',
-                    timestamp: '2025-09-27T06:25:00.000Z', 
-                    source: 'test_data'
-                }
-            ];
-            
-            console.log('📊 테스트 데이터 생성:', testData.length + '건');
-            
-            // 학생별 데이터 집계
-            const studentData = {};
-            testData.forEach(record => {
-                const key = record.studentId;
-                if (!studentData[key]) {
-                    studentData[key] = {
-                        studentId: record.studentId,
-                        studentName: record.studentName,
-                        checkIn: null,
-                        checkOut: null,
-                        records: []
-                    };
-                }
-                
-                studentData[key].records.push(record);
-                
-                if (record.status === '입실') {
-                    studentData[key].checkIn = record;
-                } else if (record.status === '퇴실') {
-                    studentData[key].checkOut = record;
-                }
-            });
 
-            // 통계 및 테이블 업데이트
-            updateStatistics(Object.values(studentData));
-            updateAttendanceTable(Object.values(studentData), '');
-        }
 
         // 🆕 localStorage 변화 감지 (admin에서 데이터 가져올 때)
         window.addEventListener('storage', function(e) {
