@@ -980,111 +980,119 @@
             }
         }
 
-        // 🎯 JJ 선생님 구글 시트 데이터 변환 (정확한 구조 - 각 행이 개별 이벤트)
+        // 🎯 JJ 선생님 구글 시트 출석부 데이터 변환 (새로운 구조)
         function convertGoogleToLocalFormat(googleRecord) {
-            console.log('🔄 출결 기록 데이터 변환:', googleRecord);
+            console.log('🔄 Google Sheets 출석부 데이터 변환:', googleRecord);
             
-            // "출결 기록" 시트에서 Google Apps Script가 이미 입실/퇴실로 분리해서 전송
-            // 구조: { timestamp, studentId, studentName, status, originalDate, originalTime }
+            // Google Sheets 출석부 구조: { id, date, studentId, studentName, checkInTime, checkOutTime, learningTime, source: 'google_sheets', rowNumber }
             
-            console.log('📊 출결 기록 데이터:', googleRecord);
-            
-            const timestamp = googleRecord.timestamp; // 이미 완전한 DateTime
             const studentId = String(googleRecord.studentId || '').trim();
             const studentName = String(googleRecord.studentName || '').trim();
-            const status = String(googleRecord.status || '').trim(); // 입실 또는 퇴실
+            const date = googleRecord.date; // 날짜 (Date 객체 또는 문자열)
+            const checkInTime = googleRecord.checkInTime; // 입실 시간
+            const checkOutTime = googleRecord.checkOutTime; // 퇴실 시간
             
-            console.log('📊 필드 추출:', { timestamp, studentId, studentName, status });
+            console.log('📊 필드 추출:', { date, studentId, studentName, checkInTime, checkOutTime });
             
-            // timestamp가 null이거나 빈 값이면 제외
-            if (timestamp === null || timestamp === undefined || timestamp === '') {
-                console.warn('⚠️ timestamp가 null/undefined/빈값 - 레코드 제외');
+            // 필수 필드 검증
+            if (!studentId || !studentName || !date) {
+                console.warn('⚠️ 필수 필드 누락 - 레코드 제외:', { studentId, studentName, date });
                 return []; // 빈 배열 반환
             }
             
-            // 타임스탬프 파싱 - "2025. 9. 1 오전 6:19:47" 형식
-            let eventDateTime;
+            const result = [];
             
-            try {
-                if (timestamp instanceof Date) {
-                    // 이미 Date 객체인 경우
-                    eventDateTime = timestamp;
-                    console.log('✅ Date 객체로 받음:', eventDateTime);
-                } else {
-                    // 문자열인 경우 파싱
-                    let timestampStr = String(timestamp).trim();
-                    console.log('🔤 원본 문자열:', timestampStr);
-                    
-                    // "2025. 9. 1 오전 6:19:47" → "2025/9/1 6:19:47 AM" 형식으로 변환
-                    if (timestampStr.includes('오전') || timestampStr.includes('오후')) {
-                        // 단계별 변환
-                        let converted = timestampStr;
-                        
-                        // 1. 오전/오후를 AM/PM으로 변환
-                        converted = converted.replace('오전', 'AM').replace('오후', 'PM');
-                        
-                        // 2. "2025. 9. 1" → "2025/9/1" 형식으로 변경 (점과 공백 제거)
-                        converted = converted.replace(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/, '$1/$2/$3');
-                        
-                        console.log('🔄 1단계 변환:', converted);
-                        
-                        // 3. 시간 부분 정리 - "6:19:47 AM" 형태로
-                        converted = converted.replace(/\s+/g, ' ').trim();
-                        
-                        console.log('🔄 최종 변환:', converted);
-                        
-                        timestampStr = converted;
-                    }
-                    
-                    // JavaScript Date 생성 시도
-                    eventDateTime = new Date(timestampStr);
-                    console.log('📅 Date 생성 결과:', eventDateTime);
-                    console.log('🔍 Date 유효성:', !isNaN(eventDateTime.getTime()));
+            // 날짜 파싱 함수
+            function parseDate(dateValue) {
+                if (dateValue instanceof Date) {
+                    return dateValue;
                 }
-                
-                // 날짜가 유효하지 않은 경우 현재 시간 사용
-                if (isNaN(eventDateTime.getTime())) {
-                    console.error('❌ 날짜 파싱 실패!');
-                    console.error('원본 timestamp:', timestamp);
-                    console.error('변환 시도한 문자열:', timestampStr);
-                    
-                    // 🚨 임시로 현재 시간 대신 에러 발생시키기
-                    throw new Error('날짜 파싱 실패: ' + timestamp);
+                if (typeof dateValue === 'object' && dateValue !== null) {
+                    // Google Sheets의 특수 Date 객체 처리
+                    return new Date(dateValue.toString());
                 }
-                
-            } catch (error) {
-                console.error('❌ 타임스탬프 파싱 오류:', error);
-                console.error('❌ 원본 데이터:', timestamp);
-                
-                // null이나 유효하지 않은 데이터는 제외
-                console.warn('⚠️ 유효하지 않은 timestamp로 인해 레코드 제외');
-                return []; // 빈 배열 반환하여 레코드 생성 안 함
+                return new Date(dateValue);
             }
             
-            console.log('✅ 변환된 시간:', eventDateTime);
-            
-            // 단일 레코드 생성 (각 행이 이미 개별 이벤트)
-            const record = {
-                id: generateId(),
-                studentId: studentId,
-                studentName: studentName,
-                status: status || '입실', // 기본값 입실
-                timestamp: eventDateTime.toISOString(),
-                submittedAt: new Date().toISOString(),
-                source: 'imported_from_google_sheets',
-                googleData: {
-                    originalTimestamp: timestamp,
-                    originalStudentId: studentId,
-                    originalStudentName: studentName,
-                    originalStatus: status,
-                    convertedDateTime: eventDateTime.toISOString(),
-                    rawRecord: googleRecord
+            // 시간 파싱 함수 (HH:mm:ss 형식으로 변환)
+            function parseTime(timeValue) {
+                if (!timeValue) return null;
+                
+                let timeStr = String(timeValue).replace(/'/g, '').trim(); // 작은따옴표 제거
+                
+                // 이미 HH:mm:ss 형식인 경우
+                if (/^\d{1,2}:\d{2}:\d{2}$/.test(timeStr)) {
+                    return timeStr;
                 }
-            };
+                
+                // Date 객체인 경우 시간만 추출
+                if (timeValue instanceof Date || (typeof timeValue === 'object' && timeValue !== null)) {
+                    const dateObj = timeValue instanceof Date ? timeValue : new Date(timeValue.toString());
+                    if (!isNaN(dateObj.getTime())) {
+                        return dateObj.toTimeString().substring(0, 8); // HH:mm:ss
+                    }
+                }
+                
+                return timeStr;
+            }
             
-            console.log('🎯 변환 완료된 레코드:', record);
+            // 기준 날짜 생성
+            const baseDate = parseDate(date);
+            if (isNaN(baseDate.getTime())) {
+                console.error('❌ 날짜 파싱 실패:', date);
+                return [];
+            }
             
-            return [record]; // 배열로 반환 (단일 레코드)
+            const dateString = baseDate.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            // 입실 기록 처리
+            if (checkInTime) {
+                const parsedCheckInTime = parseTime(checkInTime);
+                if (parsedCheckInTime) {
+                    const checkInDateTime = new Date(`${dateString}T${parsedCheckInTime}`);
+                    
+                    if (!isNaN(checkInDateTime.getTime())) {
+                        result.push({
+                            timestamp: checkInDateTime,
+                            studentId: studentId,
+                            studentName: studentName,
+                            status: '입실',
+                            originalDate: dateString,
+                            originalTime: parsedCheckInTime,
+                            source: 'google_sheets'
+                        });
+                        console.log('✅ 입실 기록 생성:', checkInDateTime);
+                    } else {
+                        console.warn('⚠️ 입실 시간 파싱 실패:', checkInTime);
+                    }
+                }
+            }
+            
+            // 퇴실 기록 처리
+            if (checkOutTime) {
+                const parsedCheckOutTime = parseTime(checkOutTime);
+                if (parsedCheckOutTime) {
+                    const checkOutDateTime = new Date(`${dateString}T${parsedCheckOutTime}`);
+                    
+                    if (!isNaN(checkOutDateTime.getTime())) {
+                        result.push({
+                            timestamp: checkOutDateTime,
+                            studentId: studentId,
+                            studentName: studentName,
+                            status: '퇴실',
+                            originalDate: dateString,
+                            originalTime: parsedCheckOutTime,
+                            source: 'google_sheets'
+                        });
+                        console.log('✅ 퇴실 기록 생성:', checkOutDateTime);
+                    } else {
+                        console.warn('⚠️ 퇴실 시간 파싱 실패:', checkOutTime);
+                    }
+                }
+            }
+            
+            console.log(`📋 변환 완료: ${result.length}개 이벤트 생성`);
+            return result;
         }
 
         // 로컬 데이터용 고유 키 생성
