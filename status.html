@@ -323,35 +323,58 @@
                     const keys = Object.keys(localStorage);
                     console.log('📋 현재 localStorage 키들:', keys);
                     
-                    // 테스트용 샘플 데이터 생성 (admin 데이터가 없을 때)
-                    if (localData.length === 0) {
+                    // 🆕 localStorage에서 다른 키로 저장된 데이터도 확인
+                    console.log('🔍 모든 localStorage 데이터 확인 중...');
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        const value = localStorage.getItem(key);
+                        console.log(`📦 localStorage[${key}]:`, value ? value.substring(0, 100) + '...' : 'null');
+                    }
+                    
+                    // admin 페이지와 동일한 localStorage 키 사용 확인
+                    const adminData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                    if (adminData.length > 0) {
+                        console.log('✅ admin 데이터 발견:', adminData.length + '건');
+                        allData = allData.concat(adminData);
+                    } else {
                         console.log('📝 테스트 데이터 생성 중...');
                         const testData = [
                             {
-                                id: 'test1',
+                                id: 'test1-' + Date.now(),
                                 studentId: '12345',
                                 studentName: '김광영',
                                 status: '입실',
                                 timestamp: '2025-09-27T06:30:00.000Z',
-                                source: 'test_data'
+                                source: 'test_data',
+                                submittedAt: new Date().toISOString()
                             },
                             {
-                                id: 'test2',
+                                id: 'test2-' + Date.now(),
                                 studentId: '12345', 
                                 studentName: '김광영',
                                 status: '퇴실',
                                 timestamp: '2025-09-27T07:45:00.000Z',
-                                source: 'test_data'
+                                source: 'test_data',
+                                submittedAt: new Date().toISOString()
                             },
                             {
-                                id: 'test3',
+                                id: 'test3-' + Date.now(),
                                 studentId: '23456',
                                 studentName: '박영희',
                                 status: '입실', 
                                 timestamp: '2025-09-27T06:25:00.000Z',
-                                source: 'test_data'
+                                source: 'test_data',
+                                submittedAt: new Date().toISOString()
                             }
                         ];
+                        
+                        // 🆕 테스트 데이터를 localStorage에 저장해서 새로고침해도 유지되도록
+                        try {
+                            localStorage.setItem('attendanceData', JSON.stringify(testData));
+                            console.log('💾 테스트 데이터 localStorage에 저장 완료');
+                        } catch (storageError) {
+                            console.warn('⚠️ localStorage 저장 실패:', storageError);
+                        }
                         
                         allData = allData.concat(testData);
                         console.log('🎯 테스트 데이터 추가됨:', testData.length + '건');
@@ -377,13 +400,28 @@
                 document.getElementById('empty-state').classList.add('hidden');
             }
 
-            // 날짜 필터링
+            // 🆕 날짜 필터링 개선 (빈 날짜일 때는 모든 데이터 표시)
             let filteredData = allData;
-            if (selectedDate) {
-                filteredData = allData.filter(record => {
+            if (selectedDate && allData.length > 0) {
+                const dateFilteredData = allData.filter(record => {
                     const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
                     return recordDate === selectedDate;
                 });
+                
+                // 선택된 날짜에 데이터가 없으면 전체 데이터 표시 (처음에는)
+                if (dateFilteredData.length === 0) {
+                    console.log(`📅 ${selectedDate}에 데이터가 없어서 전체 데이터 표시`);
+                    // 첫 로드시에만 전체 데이터 표시
+                    const firstLoad = sessionStorage.getItem('firstLoad') !== 'false';
+                    if (firstLoad) {
+                        sessionStorage.setItem('firstLoad', 'false');
+                        console.log('🎯 첫 로드이므로 전체 데이터 표시');
+                    } else {
+                        filteredData = dateFilteredData; // 빈 배열
+                    }
+                } else {
+                    filteredData = dateFilteredData;
+                }
             }
             
             // 검색 필터링
@@ -810,6 +848,24 @@
             updateStatistics(Object.values(studentData));
             updateAttendanceTable(Object.values(studentData), '');
         }
+
+        // 🆕 localStorage 변화 감지 (admin에서 데이터 가져올 때)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'attendanceData') {
+                console.log('📡 localStorage 변화 감지! 데이터 새로고침...');
+                loadAttendanceData();
+            }
+        });
+
+        // 🆕 같은 페이지 내에서 localStorage 변화 감지
+        const originalSetItem = localStorage.setItem;
+        localStorage.setItem = function(key, value) {
+            originalSetItem.call(this, key, value);
+            if (key === 'attendanceData') {
+                console.log('📡 attendanceData 업데이트 감지!');
+                setTimeout(() => loadAttendanceData(), 100);
+            }
+        };
 
         // 페이지 로드 후 초기화
         document.addEventListener('DOMContentLoaded', function() {
