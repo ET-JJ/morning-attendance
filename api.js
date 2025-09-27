@@ -6,7 +6,7 @@
 class AttendanceAPI {
     constructor() {
         // 🆕 JJ 선생님의 Google Apps Script URL 자동 설정
-        this.webAppUrl = localStorage.getItem('WEBAPP_URL') || 'https://script.google.com/macros/s/AKfycbxBZekl8Dx9LGDHCEz9_-U8Mm5R0Qo0aj3VJWOxgavIPE1KGF8KWJR17Wf9BdcrDKsT/exec';
+        this.webAppUrl = localStorage.getItem('WEBAPP_URL') || 'https://script.google.com/macros/s/AKfycbz9R4xubGpza4STDYYhc7dycb-L0H5Yl_sXK5w0FiusxbR-jUR8ZB2R2BGyK1ssCf42OA/exec';
         this.isOnlineMode = true; // 항상 온라인 모드로 설정
         
         // URL이 설정되지 않았다면 자동으로 저장
