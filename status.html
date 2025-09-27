@@ -246,15 +246,25 @@
             const statusFilter = document.getElementById('status-filter').value;
             const searchTerm = document.getElementById('search-input').value.toLowerCase();
 
+            console.log('📊 status.html에서 데이터 로드 시도:', selectedDate);
+
             // API를 통해 데이터 조회
             const result = await window.attendanceAPI.getAttendanceData({ 
                 date: selectedDate 
             });
             
+            console.log('📊 API 조회 결과:', result);
+            
             if (!result.success) {
                 console.error('데이터 로드 실패:', result.message);
+                // 빈 상태 표시
+                document.getElementById('attendance-table').innerHTML = '';
+                document.getElementById('empty-state').classList.remove('hidden');
+                updateStatistics([]);
                 return;
             }
+
+            console.log(`📊 로드된 데이터: ${result.data.length}건 (Google: ${result.googleCount || 0}건, Local: ${result.localCount || 0}건)`);
 
             // 필터링
             const filteredData = result.data.filter(record => {
