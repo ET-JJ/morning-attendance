@@ -142,7 +142,10 @@
                 <div class="flex items-center space-x-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">날짜</label>
-                        <input type="date" id="date-filter" class="border border-gray-300 rounded-md px-3 py-2">
+                        <select id="date-filter" class="border border-gray-300 rounded-md px-3 py-2">
+                            <option value="">전체 날짜</option>
+                            <option value="today">오늘</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">상태</label>
@@ -252,16 +255,25 @@
         updateDateTime();
         setInterval(updateDateTime, 1000);
 
-        // 오늘 날짜를 기본값으로 설정
-        document.getElementById('date-filter').valueAsDate = new Date();
+        // 🆕 날짜 필터 초기화 (전체가 기본값)
+        document.getElementById('date-filter').value = '';
 
         // 출결 데이터 로드 및 표시  
         async function loadAttendanceData() {
-            const selectedDate = document.getElementById('date-filter').value;
+            const selectedDateOption = document.getElementById('date-filter').value;
             const statusFilter = document.getElementById('status-filter').value;
             const searchTerm = document.getElementById('search-input').value.toLowerCase();
 
-            console.log('📊 status.html에서 데이터 로드 시도:', selectedDate);
+            // 날짜 필터 값 처리
+            let selectedDate = null;
+            if (selectedDateOption === 'today') {
+                selectedDate = new Date().toISOString().split('T')[0];
+            } else if (selectedDateOption) {
+                selectedDate = selectedDateOption;
+            }
+            // 빈 값('') 또는 'all'이면 selectedDate = null (전체)
+
+            console.log('📊 status.html에서 데이터 로드 시도:', selectedDateOption, '→', selectedDate);
             
             // 🆕 직접 Google Sheets 데이터 가져오기 시도
             let allData = [];
@@ -346,53 +358,66 @@
                         console.log(`📦 localStorage[${key}]:`, value ? value.substring(0, 100) + '...' : 'null');
                     }
                     
-                    // admin 페이지와 동일한 localStorage 키 사용 확인
+                    // 🆕 실제 데이터 확인 (테스트 데이터 제외)
                     const adminData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-                    if (adminData.length > 0) {
-                        console.log('✅ admin 데이터 발견:', adminData.length + '건');
-                        allData = allData.concat(adminData);
+                    const realData = adminData.filter(item => item.source !== 'test_data');
+                    
+                    if (realData.length > 0) {
+                        console.log('✅ 실제 데이터 발견:', realData.length + '건');
+                        console.log('🧹 테스트 데이터는 표시하지 않음');
+                        allData = allData.concat(realData);
                     } else {
-                        console.log('📝 테스트 데이터 생성 중...');
-                        const testData = [
-                            {
-                                id: 'test1-' + Date.now(),
-                                studentId: '12345',
-                                studentName: '김광영',
-                                status: '입실',
-                                timestamp: '2025-09-27T06:30:00.000Z',
-                                source: 'test_data',
-                                submittedAt: new Date().toISOString()
-                            },
-                            {
-                                id: 'test2-' + Date.now(),
-                                studentId: '12345', 
-                                studentName: '김광영',
-                                status: '퇴실',
-                                timestamp: '2025-09-27T07:45:00.000Z',
-                                source: 'test_data',
-                                submittedAt: new Date().toISOString()
-                            },
-                            {
-                                id: 'test3-' + Date.now(),
-                                studentId: '23456',
-                                studentName: '박영희',
-                                status: '입실', 
-                                timestamp: '2025-09-27T06:25:00.000Z',
-                                source: 'test_data',
-                                submittedAt: new Date().toISOString()
+                        console.log('📝 실제 데이터가 없어서 테스트 데이터 생성...');
+                        
+                        // localStorage에 테스트 데이터가 이미 있는지 확인
+                        const existingTestData = adminData.filter(item => item.source === 'test_data');
+                        
+                        if (existingTestData.length > 0) {
+                            console.log('♻️ 기존 테스트 데이터 사용:', existingTestData.length + '건');
+                            allData = allData.concat(existingTestData);
+                        } else {
+                            console.log('🆕 새로운 테스트 데이터 생성');
+                            const testData = [
+                                {
+                                    id: 'test1-' + Date.now(),
+                                    studentId: '12345',
+                                    studentName: '김광영',
+                                    status: '입실',
+                                    timestamp: '2025-09-27T06:30:00.000Z',
+                                    source: 'test_data',
+                                    submittedAt: new Date().toISOString()
+                                },
+                                {
+                                    id: 'test2-' + Date.now(),
+                                    studentId: '12345', 
+                                    studentName: '김광영',
+                                    status: '퇴실',
+                                    timestamp: '2025-09-27T07:45:00.000Z',
+                                    source: 'test_data',
+                                    submittedAt: new Date().toISOString()
+                                },
+                                {
+                                    id: 'test3-' + Date.now(),
+                                    studentId: '23456',
+                                    studentName: '박영희',
+                                    status: '입실', 
+                                    timestamp: '2025-09-27T06:25:00.000Z',
+                                    source: 'test_data',
+                                    submittedAt: new Date().toISOString()
+                                }
+                            ];
+                            
+                            // 테스트 데이터를 localStorage에 저장
+                            try {
+                                localStorage.setItem('attendanceData', JSON.stringify(testData));
+                                console.log('💾 테스트 데이터 localStorage에 저장 완료');
+                            } catch (storageError) {
+                                console.warn('⚠️ localStorage 저장 실패:', storageError);
                             }
-                        ];
-                        
-                        // 🆕 테스트 데이터를 localStorage에 저장해서 새로고침해도 유지되도록
-                        try {
-                            localStorage.setItem('attendanceData', JSON.stringify(testData));
-                            console.log('💾 테스트 데이터 localStorage에 저장 완료');
-                        } catch (storageError) {
-                            console.warn('⚠️ localStorage 저장 실패:', storageError);
+                            
+                            allData = allData.concat(testData);
+                            console.log('🎯 새 테스트 데이터 추가됨:', testData.length + '건');
                         }
-                        
-                        allData = allData.concat(testData);
-                        console.log('🎯 테스트 데이터 추가됨:', testData.length + '건');
                     }
                 } else {
                     allData = allData.concat(localData);
@@ -413,30 +438,21 @@
                 console.log('✅ 데이터가 있음, UI 업데이트 시작');
                 // 빈 상태 숨기기
                 document.getElementById('empty-state').classList.add('hidden');
+                
+                // 🆕 날짜 옵션 동적 생성
+                updateDateFilterOptions(allData);
             }
 
-            // 🆕 날짜 필터링 개선 (빈 날짜일 때는 모든 데이터 표시)
+            // 🆕 날짜 필터링 (null이면 전체, 값이 있으면 해당 날짜만)
             let filteredData = allData;
-            if (selectedDate && allData.length > 0) {
-                const dateFilteredData = allData.filter(record => {
+            if (selectedDate) {
+                filteredData = allData.filter(record => {
                     const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
                     return recordDate === selectedDate;
                 });
-                
-                // 선택된 날짜에 데이터가 없으면 전체 데이터 표시 (처음에는)
-                if (dateFilteredData.length === 0) {
-                    console.log(`📅 ${selectedDate}에 데이터가 없어서 전체 데이터 표시`);
-                    // 첫 로드시에만 전체 데이터 표시
-                    const firstLoad = sessionStorage.getItem('firstLoad') !== 'false';
-                    if (firstLoad) {
-                        sessionStorage.setItem('firstLoad', 'false');
-                        console.log('🎯 첫 로드이므로 전체 데이터 표시');
-                    } else {
-                        filteredData = dateFilteredData; // 빈 배열
-                    }
-                } else {
-                    filteredData = dateFilteredData;
-                }
+                console.log(`📅 ${selectedDate} 필터링 결과: ${filteredData.length}건`);
+            } else {
+                console.log('📅 전체 날짜 표시:', filteredData.length + '건');
             }
             
             // 검색 필터링
@@ -681,6 +697,45 @@
             } else {
                 element.textContent = `${remainingMins}분`;
             }
+        }
+
+        // 🆕 날짜 필터 옵션 동적 생성
+        function updateDateFilterOptions(allData) {
+            const dateFilter = document.getElementById('date-filter');
+            const currentValue = dateFilter.value;
+            
+            // 기존 옵션 제거 (기본 옵션 제외)
+            while (dateFilter.children.length > 2) {
+                dateFilter.removeChild(dateFilter.lastChild);
+            }
+            
+            // 데이터에서 고유한 날짜 추출
+            const dates = new Set();
+            allData.forEach(record => {
+                const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
+                dates.add(recordDate);
+            });
+            
+            // 날짜 정렬 (최신순)
+            const sortedDates = Array.from(dates).sort((a, b) => b.localeCompare(a));
+            
+            // 옵션 추가
+            sortedDates.forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = new Date(date + 'T00:00:00').toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'short'
+                });
+                dateFilter.appendChild(option);
+            });
+            
+            // 이전 값 복원
+            dateFilter.value = currentValue;
+            
+            console.log('📅 날짜 옵션 업데이트:', sortedDates.length + '개 날짜');
         }
 
         // 학생 상태 계산
