@@ -161,13 +161,25 @@
                     <button onclick="importFromGoogleSheets()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
                         <i class="fas fa-cloud-download-alt text-lg mb-1 block"></i>
                         <div class="font-medium">데이터 가져오기</div>
-                        <div class="text-xs opacity-80">구글 → 웹시스템 가져오기</div>
+                        <div class="text-xs opacity-80">구글 → 웹시스템</div>
+                    </button>
+                    
+                    <button onclick="exportToGoogleSheets()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
+                        <i class="fas fa-cloud-upload-alt text-lg mb-1 block"></i>
+                        <div class="font-medium">데이터 내보내기</div>
+                        <div class="text-xs opacity-80">웹시스템 → 구글</div>
                     </button>
                     
                     <button onclick="triggerAutomation()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
                         <i class="fas fa-robot text-lg mb-1 block"></i>
                         <div class="font-medium">자동화 실행</div>
                         <div class="text-xs opacity-80">누락 데이터 자동 처리</div>
+                    </button>
+                    
+                    <button onclick="syncBothWays()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
+                        <i class="fas fa-sync-alt text-lg mb-1 block"></i>
+                        <div class="font-medium">양방향 동기화</div>
+                        <div class="text-xs opacity-80">완전 동기화 실행</div>
                     </button>
                     
                     <button onclick="openSpreadsheet()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-3 rounded-lg text-sm transition-colors text-left">
@@ -1110,10 +1122,269 @@
             return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
         }
 
+        // 🆕 웹앱 데이터를 Google Sheets로 내보내기
+        async function exportToGoogleSheets() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            
+            // 확인 대화상자
+            if (!confirm('🚀 웹앱의 모든 출석 데이터를 Google Sheets로 동기화하시겠습니까?\n\n📊 현재 웹앱 데이터가 "웹앱 출결 기록" 시트에 저장됩니다.')) {
+                return;
+            }
+            
+            try {
+                // 버튼 상태 변경
+                button.innerHTML = '<i class="fas fa-spinner fa-spin text-lg mb-1 block"></i><div class="font-medium">전송 중...</div><div class="text-xs opacity-80">잠시만 기다려주세요</div>';
+                button.disabled = true;
+                
+                // 현재 웹앱의 모든 데이터 가져오기
+                const attendanceData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                
+                if (attendanceData.length === 0) {
+                    alert('📭 내보낼 데이터가 없습니다.\n\n웹앱에 출석 데이터가 있어야 Google Sheets로 전송할 수 있습니다.');
+                    return;
+                }
+                
+                console.log(`📤 Google Sheets로 전송할 데이터: ${attendanceData.length}건`);
+                console.log('🔍 첫 번째 레코드 샘플:', attendanceData[0]);
+                
+                // Google Apps Script로 데이터 전송
+                const response = await fetch('https://script.google.com/macros/s/AKfycbxBZekl8Dx9LGDHCEz9_-U8Mm5R0Qo0aj3VJWOxgavIPE1KGF8KWJR17Wf9BdcrDKsT/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'syncToSheets',
+                        attendanceData: attendanceData
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP 오류! 상태: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('📊 Google Sheets 동기화 결과:', result);
+                
+                if (result.success) {
+                    // 성공 메시지
+                    let message = `🎉 Google Sheets 동기화 완료!\n\n`;
+                    message += `📊 처리 결과:\n`;
+                    message += `• 전체 데이터: ${result.totalProcessed}건\n`;
+                    message += `• 새로 추가: ${result.addedCount}건\n`;
+                    message += `• 중복 제외: ${result.skippedCount}건\n`;
+                    message += `• 저장 위치: "${result.sheetName}" 시트\n\n`;
+                    message += `🔗 Google Sheets에서 확인하려면 "스프레드시트 열기" 버튼을 클릭하세요.`;
+                    
+                    alert(message);
+                    
+                } else {
+                    throw new Error(result.error || '알 수 없는 오류가 발생했습니다.');
+                }
+                
+            } catch (error) {
+                console.error('Google Sheets 동기화 실패:', error);
+                
+                let errorMessage = '❌ Google Sheets로 데이터를 전송하는데 실패했습니다.\n\n';
+                
+                if (error.message.includes('HTTP')) {
+                    errorMessage += '🔗 네트워크 연결 문제일 수 있습니다. 잠시 후 다시 시도해보세요.';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage += '🔒 CORS 정책으로 인한 차단입니다. Google Apps Script 설정을 확인해보세요.';
+                } else {
+                    errorMessage += `오류 내용: ${error.message}`;
+                }
+                
+                alert(errorMessage);
+                
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // 🔄 양방향 완전 동기화
+        async function syncBothWays() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            
+            // 확인 대화상자
+            if (!confirm('🔄 양방향 완전 동기화를 실행하시겠습니까?\n\n1️⃣ Google Sheets → 웹시스템 (가져오기)\n2️⃣ 웹시스템 → Google Sheets (내보내기)\n\n⚠️ 이 과정은 시간이 걸릴 수 있습니다.')) {
+                return;
+            }
+            
+            try {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin text-lg mb-1 block"></i><div class="font-medium">동기화 중...</div><div class="text-xs opacity-80">1단계: 가져오기</div>';
+                button.disabled = true;
+                
+                let syncReport = {
+                    step1: { success: false, details: null },
+                    step2: { success: false, details: null }
+                };
+                
+                // 1단계: Google Sheets → 웹시스템 (가져오기)
+                console.log('🔄 1단계: Google Sheets에서 데이터 가져오기 시작');
+                
+                try {
+                    // 임시로 importFromGoogleSheets 로직 실행
+                    const beforeCount = JSON.parse(localStorage.getItem('attendanceData') || '[]').length;
+                    
+                    // Google Sheets 데이터 가져오기
+                    const response1 = await fetch('https://script.google.com/macros/s/AKfycbxBZekl8Dx9LGDHCEz9_-U8Mm5R0Qo0aj3VJWOxgavIPE1KGF8KWJR17Wf9BdcrDKsT/exec?action=getAllAttendance');
+                    
+                    if (!response1.ok) {
+                        throw new Error(`Google Sheets 조회 실패: ${response1.status}`);
+                    }
+                    
+                    const googleResult = await response1.json();
+                    
+                    if (!googleResult.success) {
+                        throw new Error(googleResult.error || 'Google Sheets 데이터 조회 실패');
+                    }
+                    
+                    // 데이터 변환 및 저장
+                    const existingData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                    const existingKeys = new Set();
+                    existingData.forEach(record => {
+                        const key = generateLocalUniqueKey(record);
+                        existingKeys.add(key);
+                    });
+                    
+                    let importedCount = 0;
+                    let skippedCount = 0;
+                    
+                    googleResult.data.forEach(googleRecord => {
+                        const localRecords = convertGoogleToLocalFormat(googleRecord);
+                        localRecords.forEach(localRecord => {
+                            const key = generateLocalUniqueKey(localRecord);
+                            if (!existingKeys.has(key)) {
+                                existingData.push(localRecord);
+                                existingKeys.add(key);
+                                importedCount++;
+                            } else {
+                                skippedCount++;
+                            }
+                        });
+                    });
+                    
+                    // 정렬 및 저장
+                    existingData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    localStorage.setItem('attendanceData', JSON.stringify(existingData));
+                    
+                    syncReport.step1 = {
+                        success: true,
+                        details: {
+                            imported: importedCount,
+                            skipped: skippedCount,
+                            total: googleResult.data.length
+                        }
+                    };
+                    
+                    console.log('✅ 1단계 완료:', syncReport.step1.details);
+                    
+                } catch (error) {
+                    syncReport.step1 = {
+                        success: false,
+                        error: error.message
+                    };
+                    console.error('❌ 1단계 실패:', error);
+                }
+                
+                // 2단계: 웹시스템 → Google Sheets (내보내기)
+                button.innerHTML = '<i class="fas fa-spinner fa-spin text-lg mb-1 block"></i><div class="font-medium">동기화 중...</div><div class="text-xs opacity-80">2단계: 내보내기</div>';
+                
+                console.log('🔄 2단계: 웹시스템에서 Google Sheets로 데이터 내보내기 시작');
+                
+                try {
+                    const attendanceData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                    
+                    if (attendanceData.length > 0) {
+                        const response2 = await fetch('https://script.google.com/macros/s/AKfycbxBZekl8Dx9LGDHCEz9_-U8Mm5R0Qo0aj3VJWOxgavIPE1KGF8KWJR17Wf9BdcrDKsT/exec', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                action: 'syncToSheets',
+                                attendanceData: attendanceData
+                            })
+                        });
+                        
+                        if (!response2.ok) {
+                            throw new Error(`Google Sheets 전송 실패: ${response2.status}`);
+                        }
+                        
+                        const exportResult = await response2.json();
+                        
+                        if (!exportResult.success) {
+                            throw new Error(exportResult.error || 'Google Sheets 전송 실패');
+                        }
+                        
+                        syncReport.step2 = {
+                            success: true,
+                            details: exportResult
+                        };
+                        
+                        console.log('✅ 2단계 완료:', syncReport.step2.details);
+                        
+                    } else {
+                        syncReport.step2 = {
+                            success: true,
+                            details: { message: '내보낼 데이터 없음', addedCount: 0, skippedCount: 0 }
+                        };
+                    }
+                    
+                } catch (error) {
+                    syncReport.step2 = {
+                        success: false,
+                        error: error.message
+                    };
+                    console.error('❌ 2단계 실패:', error);
+                }
+                
+                // 결과 보고서 생성
+                updateStats();
+                showAll();
+                
+                let message = '🔄 양방향 동기화 완료!\n\n';
+                
+                // 1단계 결과
+                message += '📥 1단계 - Google Sheets → 웹시스템:\n';
+                if (syncReport.step1.success) {
+                    message += `  ✅ 성공: ${syncReport.step1.details.imported}건 추가, ${syncReport.step1.details.skipped}건 중복\n`;
+                } else {
+                    message += `  ❌ 실패: ${syncReport.step1.error}\n`;
+                }
+                
+                message += '\n';
+                
+                // 2단계 결과
+                message += '📤 2단계 - 웹시스템 → Google Sheets:\n';
+                if (syncReport.step2.success) {
+                    message += `  ✅ 성공: ${syncReport.step2.details.addedCount || 0}건 추가, ${syncReport.step2.details.skippedCount || 0}건 중복\n`;
+                } else {
+                    message += `  ❌ 실패: ${syncReport.step2.error}\n`;
+                }
+                
+                message += '\n🎯 양방향 동기화가 완료되어 두 시스템의 데이터가 동기화되었습니다!';
+                
+                alert(message);
+                
+            } catch (error) {
+                console.error('양방향 동기화 오류:', error);
+                alert(`❌ 양방향 동기화 중 오류가 발생했습니다.\n\n${error.message}`);
+                
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
         function openSpreadsheet() {
             // JJ 선생님의 구글 스프레드시트 직접 열기
             const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1dJEOyc59eZgwidKjXiYptgreAIabfBbkndN0g17Qsb8/edit';
-            window.open(spreadsheetUrl, '_blank');
+            return window.open(spreadsheetUrl, '_blank');
         }
 
         // ========== 시스템 초기화 ==========
