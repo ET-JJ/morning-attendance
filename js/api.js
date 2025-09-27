@@ -177,18 +177,27 @@ class AttendanceAPI {
                 }
             });
             
-            // 시간순 정렬
-            mergedData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            // 🆕 추가 학생 필터링 (병합 후 한 번 더 적용)
+            let finalData = mergedData;
+            if (filters.studentId) {
+                finalData = mergedData.filter(record => 
+                    record.studentId === filters.studentId.toString()
+                );
+                console.log(`🔍 학생 필터 적용: ${mergedData.length}건 → ${finalData.length}건 (학번: ${filters.studentId})`);
+            }
             
-            console.log(`📊 하이브리드 데이터 조회 완료: Google ${googleData.length}건 + Local ${localData.length}건 = 총 ${mergedData.length}건`);
+            // 시간순 정렬
+            finalData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            console.log(`📊 하이브리드 데이터 조회 완료: Google ${googleData.length}건 + Local ${localData.length}건 = 총 ${finalData.length}건`);
             
             return {
                 success: true,
-                data: mergedData,
+                data: finalData,
                 source: 'hybrid',
                 googleCount: googleData.length,
                 localCount: localData.length,
-                total: mergedData.length
+                total: finalData.length
             };
             
         } catch (error) {
@@ -269,13 +278,22 @@ class AttendanceAPI {
                     }
                 });
                 
-                // 날짜 필터링 적용
+                // 필터링 적용
                 let filteredData = convertedData;
+                
+                // 날짜 필터링
                 if (filters.date) {
-                    filteredData = convertedData.filter(record => {
+                    filteredData = filteredData.filter(record => {
                         const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
                         return recordDate === filters.date;
                     });
+                }
+                
+                // 🆕 학생 필터링 (Google Sheets 데이터에도 적용)
+                if (filters.studentId) {
+                    filteredData = filteredData.filter(record => 
+                        record.studentId === filters.studentId.toString()
+                    );
                 }
                 
                 console.log('📊 구글 스프레드시트에서 데이터 조회 성공:', filteredData.length + '건');
