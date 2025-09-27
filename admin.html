@@ -849,7 +849,7 @@
                 // Google Sheets에서 전체 데이터 조회
                 console.log('🔗 요청 URL:', `${window.attendanceAPI.webAppUrl}?action=getAllRecords&timestamp=${Date.now()}`);
                 
-                const response = await fetch(`${window.attendanceAPI.webAppUrl}?action=getAllRecords&timestamp=${Date.now()}`, {
+                const response = await fetch(`${window.attendanceAPI.webAppUrl}?action=getAllAttendance&timestamp=${Date.now()}`, {
                     method: 'GET',
                     mode: 'cors'
                 });
