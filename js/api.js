@@ -9,6 +9,10 @@ class AttendanceAPI {
         this.webAppUrl = localStorage.getItem('WEBAPP_URL') || 'https://script.google.com/macros/s/AKfycbway641X2eskkkpRAw36Yde059Vcto9Oqr6ezRx5969FzO912cZsOKlOrAvbUkfSXWZMA/exec';
         this.isOnlineMode = true; // 항상 온라인 모드로 설정
         
+        // ⚡ 성능 최적화: 요청 캐싱
+        this.requestCache = new Map();
+        this.cacheTimeout = 60000; // 1분 캐시
+        
         // URL이 설정되지 않았다면 자동으로 저장
         if (!localStorage.getItem('WEBAPP_URL')) {
             localStorage.setItem('WEBAPP_URL', this.webAppUrl);
@@ -668,10 +672,39 @@ class AttendanceAPI {
     }
 
     /**
-     * 구글 스프레드시트에서 학생 명단 조회
+     * ⚡ 캐시 확인 및 반환
+     */
+    _getCachedData(cacheKey) {
+        const cached = this.requestCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+            return cached.data;
+        }
+        return null;
+    }
+    
+    /**
+     * ⚡ 데이터 캐싱
+     */
+    _setCachedData(cacheKey, data) {
+        this.requestCache.set(cacheKey, {
+            data: data,
+            timestamp: Date.now()
+        });
+    }
+
+    /**
+     * 구글 스프레드시트에서 학생 명단 조회 (캐싱 최적화)
      */
     async getStudentList() {
         try {
+            // ⚡ 캐시 확인
+            const cacheKey = 'studentList';
+            const cachedResult = this._getCachedData(cacheKey);
+            if (cachedResult) {
+                console.log('⚡ 캐시된 학생 명단 사용:', cachedResult.data.length + '명');
+                return cachedResult;
+            }
+            
             if (this.isOnlineMode && this.webAppUrl) {
                 console.log('📚 구글 스프레드시트에서 학생 명단 조회 중...');
                 
@@ -693,11 +726,16 @@ class AttendanceAPI {
                         localStorage.setItem('studentList', JSON.stringify(result.data));
                         localStorage.setItem('studentListUpdated', new Date().toISOString());
                         
-                        return {
+                        const successResult = {
                             success: true,
                             data: result.data,
                             source: 'google_sheets'
                         };
+                        
+                        // ⚡ 메모리 캐싱
+                        this._setCachedData(cacheKey, successResult);
+                        
+                        return successResult;
                     }
                 }
             }
@@ -967,6 +1005,19 @@ class AttendanceAPI {
 
 // 전역 API 인스턴스 생성
 window.attendanceAPI = new AttendanceAPI();
+
+// ⚡ 서비스 워커 등록 (캐싱 최적화)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+                console.log('⚡ 서비스 워커 등록 성공:', registration.scope);
+            })
+            .catch(function(error) {
+                console.log('서비스 워커 등록 실패:', error);
+            });
+    });
+}
 
 // 연결 상태 주기적 확인
 setInterval(async () => {
