@@ -68,33 +68,37 @@
     <!-- 메인 컨텐츠 -->
     <main class="max-w-6xl mx-auto px-4 pb-8">
         <!-- 학번 입력 폼 -->
-        <div id="search-section" class="glass-effect rounded-2xl shadow-2xl p-6 mb-8">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-search text-white text-2xl"></i>
-                </div>
-                <h2 class="text-xl font-bold text-black mb-2">나의 학습 기록 조회</h2>
-                <p class="text-black">학번을 입력하여 개인 출결 현황을 확인하세요</p>
-            </div>
+        <div class="flex justify-center mb-8">
+            <div class="w-full max-w-2xl">
+                <div id="search-section" class="glass-effect rounded-2xl shadow-2xl p-6">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-search text-white text-2xl"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-black mb-2">나의 학습 기록 조회</h2>
+                        <p class="text-black">학번을 입력하여 개인 출결 현황을 확인하세요</p>
+                    </div>
 
-            <div class="max-w-md mx-auto">
-                <div class="flex space-x-3">
-                    <input 
-                        type="text" 
-                        id="student-search" 
-                        placeholder="학번 입력 (예: 20101)" 
-                        class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg text-center font-mono"
-                        maxlength="5"
-                        pattern="[0-9]{5}"
-                    >
-                    <button 
-                        onclick="searchStudent()" 
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
-                    >
-                        <i class="fas fa-search mr-2"></i>조회
-                    </button>
+                    <div class="max-w-md mx-auto">
+                        <div class="flex space-x-3">
+                            <input 
+                                type="text" 
+                                id="student-search" 
+                                placeholder="학번 입력 (예: 20101)" 
+                                class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg text-center font-mono"
+                                maxlength="5"
+                                pattern="[0-9]{5}"
+                            >
+                            <button 
+                                onclick="searchStudent()" 
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+                            >
+                                <i class="fas fa-search mr-2"></i>조회
+                            </button>
+                        </div>
+                        <div class="text-xs text-black mt-2 text-center">5자리 학번을 정확히 입력해주세요</div>
+                    </div>
                 </div>
-                <div class="text-xs text-black mt-2 text-center">5자리 학번을 정확히 입력해주세요</div>
             </div>
         </div>
 
@@ -260,27 +264,29 @@
                     <h3 class="text-xl font-bold text-gray-900 mb-2">훌륭해요! 🎉</h3>
                     <p class="text-gray-600 mb-4" id="encouragement-text">꾸준한 아침자습으로 실력을 쌓고 있어요!</p>
                     <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4">
-                        <p class="text-sm text-gray-700" id="next-goal">다음 목표: 30일 연속 출석 달성까지 5일 남았어요!</p>
+                        <p class="text-sm text-gray-700" id="next-goal">다음 목표: 30일 출석 달성까지 5일 남았어요!</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- 빠른 링크 -->
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="index.html" class="glass-effect rounded-xl p-4 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
-                <i class="fas fa-plus-circle text-indigo-600 mb-2"></i>
-                <div class="font-medium">출결 입력</div>
-                <div class="text-sm text-black">새로운 기록 추가</div>
-            </a>
-            
-            <a href="status.html" class="glass-effect rounded-xl p-4 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
-                <i class="fas fa-users text-purple-600 mb-2"></i>
-                <div class="font-medium">전체 현황</div>
-                <div class="text-sm text-black">모든 학생 현황</div>
-            </a>
-            
-
+        <div class="mt-8 flex justify-center">
+            <div class="w-full max-w-4xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <a href="index.html" class="glass-effect rounded-xl p-6 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
+                        <i class="fas fa-plus-circle text-indigo-600 mb-3 text-3xl"></i>
+                        <div class="font-medium text-lg">출결 입력</div>
+                        <div class="text-sm text-black mt-1">새로운 기록 추가</div>
+                    </a>
+                    
+                    <a href="status.html" class="glass-effect rounded-xl p-6 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
+                        <i class="fas fa-users text-purple-600 mb-3 text-3xl"></i>
+                        <div class="font-medium text-lg">전체 현황</div>
+                        <div class="text-sm text-black mt-1">모든 학생 현황</div>
+                    </a>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -522,10 +528,7 @@
 
         // 통계 표시 업데이트
         function updateStatsDisplay(stats) {
-            document.getElementById('total-days').textContent = stats.totalDays;
-            document.getElementById('total-study-time').textContent = stats.totalStudyTime;
-            document.getElementById('avg-study-time').textContent = stats.avgStudyTime;
-            document.getElementById('attendance-rate').textContent = stats.attendanceRate;
+            // 기존 개별 통계 카드들은 제거되었으므로 성취 배지 내 통계만 업데이트
         }
 
         // 성취 배지 업데이트
@@ -573,8 +576,8 @@
             if (stats.attendanceRate >= 95) badges.push({icon: 'fa-star', color: 'bg-yellow-500', title: '완벽 출석', desc: '95% 이상'});
             else if (stats.attendanceRate >= 80) badges.push({icon: 'fa-thumbs-up', color: 'bg-yellow-400', title: '우수 출석', desc: '80% 이상'});
             
-            // 연속 출석 배지
-            if (stats.consecutiveDays >= 10) badges.push({icon: 'fa-fire', color: 'bg-red-500', title: '연속 출석', desc: `${stats.consecutiveDays}일 연속`});
+            // 꾸준함 배지
+            if (stats.consecutiveDays >= 10) badges.push({icon: 'fa-fire', color: 'bg-red-500', title: '꾸준함 배지', desc: `${stats.consecutiveDays}일 달성`});
             
             const badgeContainer = document.getElementById('badge-container');
             if (badges.length === 0) {
@@ -745,7 +748,7 @@
                 nextGoal = '80% 출석률을 목표로 해보세요!';
             } else {
                 encouragementText = '아침자습의 시작, 좋은 선택이에요! ✨';
-                nextGoal = '1주일 연속 출석을 목표로 해보세요!';
+                nextGoal = '1주일 출석을 목표로 해보세요!';
             }
             
             document.getElementById('encouragement-text').textContent = encouragementText;
