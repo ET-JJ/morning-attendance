@@ -363,7 +363,7 @@
                 }
                 
                 currentStudentId = studentId;
-                showStudentStats(studentRecords);
+                await showStudentStats(studentRecords);
 
             } catch (error) {
                 console.error('학생 검색 중 오류:', error);
@@ -414,13 +414,26 @@
         }
 
         // 학생 통계 표시
-        function showStudentStats(records) {
+        async function showStudentStats(records) {
             document.getElementById('search-section').classList.add('hidden');
             document.getElementById('no-data-message').classList.add('hidden');
             document.getElementById('student-stats').classList.remove('hidden');
             
-            // 학생 정보 설정
-            const studentName = records[0].studentName;
+            // 학생 정보 설정 (API로 정확한 이름 조회)
+            let studentName = records[0].studentName;
+            
+            // API를 통해 정확한 학생 이름 조회
+            if (typeof window.attendanceAPI !== 'undefined') {
+                try {
+                    const studentResult = await window.attendanceAPI.getStudentName(currentStudentId);
+                    if (studentResult.success) {
+                        studentName = studentResult.data.studentName;
+                    }
+                } catch (error) {
+                    console.warn('학생 이름 조회 실패, 기존 데이터 사용:', error);
+                }
+            }
+            
             // 학생 정보 헤더 업데이트
             document.getElementById('student-info').textContent = `${studentName} (${currentStudentId})`;
             
