@@ -868,10 +868,31 @@
                 // 🔍 실제 구글 데이터 구조 확인 (처음 3개만)
                 console.log('🔍 구글 시트 원본 데이터 샘플:');
                 googleData.slice(0, 3).forEach((record, index) => {
-                    console.log(`Record ${index + 1}:`, record);
-                    console.log(`- checkIn 타입:`, typeof record.checkIn, ' 값:', record.checkIn);
-                    console.log(`- checkOut 타입:`, typeof record.checkOut, '값:', record.checkOut);
-                    console.log(`- date 타입:`, typeof record.date, '값:', record.date);
+                    console.log(`\n=== Record ${index + 1} ===`);
+                    console.log('전체 객체:', record);
+                    console.log('모든 키들:', Object.keys(record));
+                    console.log('모든 값들:', Object.values(record));
+                    
+                    // 예상 가능한 다양한 필드명들 체크
+                    console.log('timestamp 관련:', {
+                        timestamp: record.timestamp,
+                        타임스탬프: record['타임스탬프'],
+                        date: record.date,
+                        시간: record['시간']
+                    });
+                    
+                    console.log('학생 정보:', {
+                        studentId: record.studentId,
+                        학번: record['학번'],
+                        studentName: record.studentName,
+                        이름: record['이름']
+                    });
+                    
+                    console.log('상태 정보:', {
+                        status: record.status,
+                        상태: record['상태'],
+                        action: record.action
+                    });
                 });
 
                 if (googleData.length === 0) {
