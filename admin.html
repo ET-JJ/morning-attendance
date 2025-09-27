@@ -996,6 +996,12 @@
             
             console.log('📊 필드 추출:', { timestamp, studentId, studentName, status });
             
+            // timestamp가 null이거나 빈 값이면 제외
+            if (timestamp === null || timestamp === undefined || timestamp === '') {
+                console.warn('⚠️ timestamp가 null/undefined/빈값 - 레코드 제외');
+                return []; // 빈 배열 반환
+            }
+            
             // 타임스탬프 파싱 - "2025. 9. 1 오전 6:19:47" 형식
             let eventDateTime;
             
@@ -1050,8 +1056,9 @@
                 console.error('❌ 타임스탬프 파싱 오류:', error);
                 console.error('❌ 원본 데이터:', timestamp);
                 
-                // 기본값 대신 상세 오류 로깅
-                eventDateTime = new Date(); // 임시 기본값
+                // null이나 유효하지 않은 데이터는 제외
+                console.warn('⚠️ 유효하지 않은 timestamp로 인해 레코드 제외');
+                return []; // 빈 배열 반환하여 레코드 생성 안 함
             }
             
             console.log('✅ 변환된 시간:', eventDateTime);
