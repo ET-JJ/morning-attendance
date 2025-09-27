@@ -204,11 +204,23 @@
 
             <!-- 빈 상태 -->
             <div id="empty-state" class="hidden text-center py-12">
-                <i class="fas fa-inbox text-gray-400 text-4xl mb-4"></i>
-                <p class="text-gray-500">아직 출결 데이터가 없습니다.</p>
-                <a href="index.html" class="inline-block mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">
-                    <i class="fas fa-plus mr-1"></i>출결 입력하기
-                </a>
+                <i class="fas fa-chart-line text-gray-400 text-4xl mb-4"></i>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">출결 데이터가 없습니다</h3>
+                <p class="text-gray-500 mb-6">아래 방법으로 출결 데이터를 추가해보세요:</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
+                    <a href="admin.html" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors">
+                        <i class="fas fa-cloud-download-alt mr-2"></i>Google Sheets에서 가져오기
+                    </a>
+                    
+                    <a href="index.html" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors">
+                        <i class="fas fa-plus mr-2"></i>직접 출결 입력하기
+                    </a>
+                </div>
+                
+                <div class="mt-8 text-sm text-gray-400">
+                    <p>💡 <strong>추천:</strong> admin 페이지에서 "전체 기존 데이터 한번에 가져오기"를 실행하세요</p>
+                </div>
             </div>
         </div>
 
@@ -358,66 +370,16 @@
                         console.log(`📦 localStorage[${key}]:`, value ? value.substring(0, 100) + '...' : 'null');
                     }
                     
-                    // 🆕 실제 데이터 확인 (테스트 데이터 제외)
+                    // 🆕 실제 데이터만 사용 (테스트 데이터 생성 안 함)
                     const adminData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
                     const realData = adminData.filter(item => item.source !== 'test_data');
                     
                     if (realData.length > 0) {
                         console.log('✅ 실제 데이터 발견:', realData.length + '건');
-                        console.log('🧹 테스트 데이터는 표시하지 않음');
                         allData = allData.concat(realData);
                     } else {
-                        console.log('📝 실제 데이터가 없어서 테스트 데이터 생성...');
-                        
-                        // localStorage에 테스트 데이터가 이미 있는지 확인
-                        const existingTestData = adminData.filter(item => item.source === 'test_data');
-                        
-                        if (existingTestData.length > 0) {
-                            console.log('♻️ 기존 테스트 데이터 사용:', existingTestData.length + '건');
-                            allData = allData.concat(existingTestData);
-                        } else {
-                            console.log('🆕 새로운 테스트 데이터 생성');
-                            const testData = [
-                                {
-                                    id: 'test1-' + Date.now(),
-                                    studentId: '12345',
-                                    studentName: '김광영',
-                                    status: '입실',
-                                    timestamp: '2025-09-27T06:30:00.000Z',
-                                    source: 'test_data',
-                                    submittedAt: new Date().toISOString()
-                                },
-                                {
-                                    id: 'test2-' + Date.now(),
-                                    studentId: '12345', 
-                                    studentName: '김광영',
-                                    status: '퇴실',
-                                    timestamp: '2025-09-27T07:45:00.000Z',
-                                    source: 'test_data',
-                                    submittedAt: new Date().toISOString()
-                                },
-                                {
-                                    id: 'test3-' + Date.now(),
-                                    studentId: '23456',
-                                    studentName: '박영희',
-                                    status: '입실', 
-                                    timestamp: '2025-09-27T06:25:00.000Z',
-                                    source: 'test_data',
-                                    submittedAt: new Date().toISOString()
-                                }
-                            ];
-                            
-                            // 테스트 데이터를 localStorage에 저장
-                            try {
-                                localStorage.setItem('attendanceData', JSON.stringify(testData));
-                                console.log('💾 테스트 데이터 localStorage에 저장 완료');
-                            } catch (storageError) {
-                                console.warn('⚠️ localStorage 저장 실패:', storageError);
-                            }
-                            
-                            allData = allData.concat(testData);
-                            console.log('🎯 새 테스트 데이터 추가됨:', testData.length + '건');
-                        }
+                        console.log('📭 실제 데이터가 없습니다. 빈 상태로 표시합니다.');
+                        // 테스트 데이터 생성하지 않음 - 빈 상태 유지
                     }
                 } else {
                     allData = allData.concat(localData);
@@ -1053,9 +1015,27 @@
             }
         };
 
+        // 🧹 기존 테스트 데이터 자동 정리
+        function cleanupTestData() {
+            try {
+                const allData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                const realData = allData.filter(item => item.source !== 'test_data');
+                const testData = allData.filter(item => item.source === 'test_data');
+                
+                if (testData.length > 0) {
+                    console.log('🧹 기존 테스트 데이터 정리:', testData.length + '건');
+                    localStorage.setItem('attendanceData', JSON.stringify(realData));
+                    console.log('✅ 테스트 데이터 정리 완료, 실제 데이터:', realData.length + '건');
+                }
+            } catch (error) {
+                console.warn('⚠️ 테스트 데이터 정리 실패:', error);
+            }
+        }
+
         // 페이지 로드 후 초기화
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📄 DOM 로드 완료');
+            cleanupTestData(); // 테스트 데이터 자동 정리
             setTimeout(initializeApp, 100); // 100ms 지연 후 초기화
         });
 
