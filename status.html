@@ -275,6 +275,9 @@
             // 🔧 데이터 로드 전에 테스트 데이터 정리 한번 더 실행
             cleanupTestData();
             
+            // 필터 변경 시 페이지를 첫 번째로 초기화
+            currentPage = 1;
+            
             const selectedDateOption = document.getElementById('date-filter').value;
             const statusFilter = document.getElementById('status-filter').value;
             const searchTerm = document.getElementById('search-input').value.toLowerCase();
@@ -570,7 +573,12 @@
             return Object.values(dateStudentMap);
         }
 
-        // 테이블 업데이트 (날짜별 정렬)
+        // 페이지네이션 변수
+        let currentPage = 1;
+        const itemsPerPage = 30;
+        let allFilteredStudents = [];
+
+        // 테이블 업데이트 (날짜별 정렬 + 페이지네이션)
         function updateAttendanceTable(studentData, statusFilter) {
             console.log('📋 테이블 업데이트 시작, 데이터:', studentData.length + '건');
             
@@ -599,28 +607,54 @@
                 const dateB = b.date || (b.checkIn ? new Date(b.checkIn.timestamp).toISOString().split('T')[0] : '0000-00-00');
                 return dateB.localeCompare(dateA);
             });
-
-            // 🆕 총 학습시간 계산
-            let totalMinutes = 0;
             
-            tableBody.innerHTML = filteredStudents.map(student => {
+            allFilteredStudents = filteredStudents;
+            
+            // 🆕 총 학습시간 계산 (중복 제거)
+            const uniqueRecords = new Map();
+            filteredStudents.forEach(student => {
+                const key = `${student.studentId}-${student.date}`;
+                if (!uniqueRecords.has(key)) {
+                    uniqueRecords.set(key, student);
+                }
+            });
+            
+            let totalMinutes = 0;
+            uniqueRecords.forEach(student => {
+                if (student.checkIn && student.checkOut) {
+                    const start = new Date(student.checkIn.timestamp);
+                    const end = new Date(student.checkOut.timestamp);
+                    const diffMs = end - start;
+                    const diffMins = Math.floor(diffMs / (1000 * 60));
+                    if (diffMins > 0 && diffMins <= 300) { // 0분~5시간 사이만 (아침자습 시간 고려)
+                        totalMinutes += diffMins;
+                    }
+                }
+            });
+            
+            // 페이지네이션 적용
+            displayCurrentPage();
+            updatePagination();
+            
+            // 🆕 총 학습시간 표시
+            updateTotalStudyTime(totalMinutes);
+            console.log('📊 총 학습시간 (중복제거):', totalMinutes + '분', '/ 고유 레코드:', uniqueRecords.size + '개');
+        }
+        
+        // 현재 페이지 데이터 표시
+        function displayCurrentPage() {
+            const tableBody = document.getElementById('attendance-table');
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = allFilteredStudents.slice(startIndex, endIndex);
+            
+            tableBody.innerHTML = pageData.map(student => {
                 const date = student.date || (student.checkIn ? new Date(student.checkIn.timestamp).toLocaleDateString('ko-KR') : '-');
                 const checkInTime = student.checkIn ? formatTime(student.checkIn.timestamp) : '-';
                 const checkOutTime = student.checkOut ? formatTime(student.checkOut.timestamp) : '-';
                 const studyTime = calculateStudyTime(student.checkIn, student.checkOut);
                 const status = getStudentStatus(student);
                 const statusBadge = getStatusBadge(status);
-
-                // 학습시간을 분으로 변환해서 총합에 추가
-                if (student.checkIn && student.checkOut) {
-                    const start = new Date(student.checkIn.timestamp);
-                    const end = new Date(student.checkOut.timestamp);
-                    const diffMs = end - start;
-                    const diffMins = Math.floor(diffMs / (1000 * 60));
-                    if (diffMins > 0 && diffMins <= 1440) { // 0분~24시간 사이만
-                        totalMinutes += diffMins;
-                    }
-                }
 
                 return `
                     <tr class="hover:bg-gray-50">
@@ -634,10 +668,6 @@
                     </tr>
                 `;
             }).join('');
-
-            // 🆕 총 학습시간 표시
-            updateTotalStudyTime(totalMinutes);
-            console.log('📊 총 학습시간:', totalMinutes + '분');
         }
 
         // 🆕 총 학습시간 업데이트 함수
@@ -662,6 +692,118 @@
             } else {
                 element.textContent = `${remainingMins}분`;
             }
+        }
+        
+        // 페이지네이션 업데이트
+        function updatePagination() {
+            const totalItems = allFilteredStudents.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            // 기존 페이지네이션 제거
+            const existingPagination = document.querySelector('.pagination-container');
+            if (existingPagination) {
+                existingPagination.remove();
+            }
+            
+            if (totalPages <= 1) return;
+            
+            // 페이지네이션 HTML 생성
+            const paginationHtml = `
+                <div class="pagination-container mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg shadow">
+                    <div class="flex flex-1 justify-between sm:hidden">
+                        <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} 
+                                class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                            이전
+                        </button>
+                        <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}
+                                class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                            다음
+                        </button>
+                    </div>
+                    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                <span class="font-medium">${(currentPage - 1) * itemsPerPage + 1}</span>
+                                -
+                                <span class="font-medium">${Math.min(currentPage * itemsPerPage, totalItems)}</span>
+                                / 총 <span class="font-medium">${totalItems}</span>개
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                ${generatePaginationButtons(currentPage, totalPages)}
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 테이블 뒤에 페이지네이션 추가
+            const tableContainer = document.querySelector('#attendance-table').closest('.bg-white');
+            tableContainer.insertAdjacentHTML('afterend', paginationHtml);
+        }
+        
+        // 페이지네이션 버튼 생성
+        function generatePaginationButtons(current, total) {
+            let buttons = [];
+            
+            // 이전 버튼
+            buttons.push(`
+                <button onclick="goToPage(${current - 1})" ${current === 1 ? 'disabled' : ''}
+                        class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 disabled:opacity-50">
+                    <span class="sr-only">이전</span>
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `);
+            
+            // 페이지 번호 버튼
+            const startPage = Math.max(1, current - 2);
+            const endPage = Math.min(total, current + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === current;
+                buttons.push(`
+                    <button onclick="goToPage(${i})" 
+                            class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                                isActive 
+                                ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                                : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20'
+                            }">
+                        ${i}
+                    </button>
+                `);
+            }
+            
+            // 다음 버튼
+            buttons.push(`
+                <button onclick="goToPage(${current + 1})" ${current === total ? 'disabled' : ''}
+                        class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 disabled:opacity-50">
+                    <span class="sr-only">다음</span>
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `);
+            
+            return buttons.join('');
+        }
+        
+        // 페이지 이동
+        function goToPage(pageNumber) {
+            const totalPages = Math.ceil(allFilteredStudents.length / itemsPerPage);
+            if (pageNumber < 1 || pageNumber > totalPages) return;
+            
+            currentPage = pageNumber;
+            displayCurrentPage();
+            updatePagination();
+            
+            // 테이블 상단으로 스크롤
+            document.querySelector('#attendance-table').closest('.bg-white').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
         }
 
         // 🆕 날짜 필터 옵션 동적 생성
