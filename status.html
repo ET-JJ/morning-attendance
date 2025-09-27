@@ -1020,20 +1020,47 @@
             }
         };
 
-        // 🧹 기존 테스트 데이터 자동 정리
+        // 🧹 강력한 테스트 데이터 정리
         function cleanupTestData() {
             try {
                 const allData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
-                const realData = allData.filter(item => item.source !== 'test_data');
-                const testData = allData.filter(item => item.source === 'test_data');
+                
+                // 더 포괄적인 테스트 데이터 감지
+                const testData = allData.filter(item => 
+                    item.source === 'test_data' || 
+                    item.studentName === '김광영' || 
+                    item.studentName === '박영희' ||
+                    item.studentId === '12345' ||
+                    item.studentId === '23456'
+                );
+                
+                const realData = allData.filter(item => 
+                    item.source !== 'test_data' && 
+                    item.studentName !== '김광영' && 
+                    item.studentName !== '박영희' &&
+                    item.studentId !== '12345' &&
+                    item.studentId !== '23456'
+                );
                 
                 if (testData.length > 0) {
-                    console.log('🧹 기존 테스트 데이터 정리:', testData.length + '건');
+                    console.log('🧹 테스트 데이터 강력 정리:', testData.length + '건');
+                    console.log('🧹 테스트 데이터 상세:', testData);
+                    
                     localStorage.setItem('attendanceData', JSON.stringify(realData));
                     console.log('✅ 테스트 데이터 정리 완료, 실제 데이터:', realData.length + '건');
+                    
+                    // 정리 결과 강제 저장 확인
+                    const verification = JSON.parse(localStorage.getItem('attendanceData') || '[]');
+                    console.log('🔍 정리 후 검증:', verification.length + '건');
+                    
+                    return true; // 정리했음을 알림
+                } else {
+                    console.log('✅ 정리할 테스트 데이터 없음');
+                    return false; // 정리할 게 없었음을 알림
                 }
             } catch (error) {
-                console.warn('⚠️ 테스트 데이터 정리 실패:', error);
+                console.error('❌ 테스트 데이터 정리 실패:', error);
+                return false;
             }
         }
 
@@ -1041,11 +1068,28 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📄 DOM 로드 완료');
             
-            // 🔧 테스트 데이터 정리를 먼저 실행하고 완료 후 앱 초기화
-            cleanupTestData();
+            // 🆗 URL 파라미터로 강제 정리 모드 확인
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceClean = urlParams.get('clean') === 'true';
             
-            // 정리 완료 후 충분한 시간을 두고 앱 초기화
-            setTimeout(initializeApp, 300); // 300ms 지연으로 증가
+            if (forceClean) {
+                console.log('🧹 강제 정리 모드 실행');
+                localStorage.removeItem('attendanceData');
+                console.log('✅ 강제 정리 완료');
+            }
+            
+            // 🔧 테스트 데이터 정리를 먼저 실행
+            const wasCleanedUp = cleanupTestData();
+            
+            if (wasCleanedUp || forceClean) {
+                console.log('🔄 테스트 데이터가 정리되었으므로 잠시 후 재초기화');
+                // 정리가 된 경우 더 긴 시간 대기
+                setTimeout(initializeApp, 500);
+            } else {
+                console.log('✅ 정리할 데이터가 없으므로 바로 초기화');
+                // 정리할 게 없었으면 바로 초기화
+                setTimeout(initializeApp, 100);
+            }
         });
 
         // API 스크립트가 이미 로드된 경우를 위한 fallback
@@ -1058,16 +1102,26 @@
         // 🆕 페이지 포커스 시에도 테스트 데이터 정리 (다른 페이지에서 이동해올 때)
         window.addEventListener('focus', function() {
             console.log('👀 페이지 포커스 감지 - 테스트 데이터 정리');
-            cleanupTestData();
-            setTimeout(() => loadAttendanceData(), 100);
+            const wasCleanedUp = cleanupTestData();
+            if (wasCleanedUp) {
+                console.log('🔄 포커스 시 테스트 데이터 정리됨, 데이터 재로드');
+                setTimeout(() => loadAttendanceData(), 200);
+            } else {
+                setTimeout(() => loadAttendanceData(), 50);
+            }
         });
 
         // 🆕 페이지 가시성 변화 감지 (브라우저 탭 전환 등)
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
                 console.log('👀 페이지 가시성 복구 - 테스트 데이터 정리');
-                cleanupTestData();
-                setTimeout(() => loadAttendanceData(), 100);
+                const wasCleanedUp = cleanupTestData();
+                if (wasCleanedUp) {
+                    console.log('🔄 가시성 복구 시 테스트 데이터 정리됨, 데이터 재로드');
+                    setTimeout(() => loadAttendanceData(), 200);
+                } else {
+                    setTimeout(() => loadAttendanceData(), 50);
+                }
             }
         });
     </script>
