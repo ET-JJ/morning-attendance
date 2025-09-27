@@ -119,7 +119,9 @@
         </div>
 
         <!-- 학생 개인 통계 (조회 후 표시) -->
-        <div id="student-stats" class="hidden space-y-8">
+        <div class="flex justify-center">
+            <div class="w-full max-w-4xl">
+                <div id="student-stats" class="hidden space-y-8">
             <!-- 학생 정보 헤더 -->
             <div class="glass-effect rounded-xl p-6">
                 <div class="flex items-center justify-between">
@@ -197,14 +199,48 @@
                 </div>
             </div>
 
-            <!-- 성취 배지 -->
-            <div id="achievements" class="glass-effect rounded-xl p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-trophy text-yellow-500 mr-2"></i>
-                    성취 배지
-                </h3>
-                <div id="badge-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <!-- 동적으로 생성될 배지들 -->
+            <!-- 학습 통계 배너들 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 총 출석일수 -->
+                <div class="glass-effect rounded-xl p-6">
+                    <div class="flex items-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-calendar-check text-blue-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-black">총 출석일수</h3>
+                            <p class="text-3xl font-bold text-gray-900" id="stats-total-days">0</p>
+                            <p class="text-sm text-blue-600">일</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 누적 학습시간 -->
+                <div class="glass-effect rounded-xl p-6">
+                    <div class="flex items-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-clock text-green-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-black">누적 학습시간</h3>
+                            <p class="text-3xl font-bold text-gray-900" id="stats-total-time">0분</p>
+                            <p class="text-sm text-green-600">분</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 평균 학습시간 -->
+                <div class="glass-effect rounded-xl p-6">
+                    <div class="flex items-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-chart-line text-purple-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-black">평균 학습시간</h3>
+                            <p class="text-3xl font-bold text-gray-900" id="stats-avg-time">0분</p>
+                            <p class="text-sm text-purple-600">분</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -268,25 +304,23 @@
                     </div>
                 </div>
             </div>
+                </div>
+            </div>
         </div>
 
         <!-- 빠른 링크 -->
-        <div class="mt-8 flex justify-center">
-            <div class="w-full max-w-4xl">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <a href="index.html" class="glass-effect rounded-xl p-6 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
-                        <i class="fas fa-plus-circle text-indigo-600 mb-3 text-3xl"></i>
-                        <div class="font-medium text-lg">출결 입력</div>
-                        <div class="text-sm text-black mt-1">새로운 기록 추가</div>
-                    </a>
-                    
-                    <a href="status.html" class="glass-effect rounded-xl p-6 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
-                        <i class="fas fa-users text-purple-600 mb-3 text-3xl"></i>
-                        <div class="font-medium text-lg">전체 현황</div>
-                        <div class="text-sm text-black mt-1">모든 학생 현황</div>
-                    </a>
-                </div>
-            </div>
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <a href="index.html" class="glass-effect rounded-xl p-6 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
+                <i class="fas fa-plus-circle text-indigo-600 mb-3 text-3xl"></i>
+                <div class="font-medium text-lg">출결 입력</div>
+                <div class="text-sm text-black mt-1">새로운 기록 추가</div>
+            </a>
+            
+            <a href="status.html" class="glass-effect rounded-xl p-6 text-center hover:bg-white hover:bg-opacity-30 transition-all duration-200 text-black">
+                <i class="fas fa-users text-purple-600 mb-3 text-3xl"></i>
+                <div class="font-medium text-lg">전체 현황</div>
+                <div class="text-sm text-black mt-1">모든 학생 현황</div>
+            </a>
         </div>
     </main>
 
@@ -333,34 +367,42 @@
             try {
                 let studentRecords = [];
                 
-                // Google Apps Script API가 로드되어 있고 연결된 경우
-                if (typeof window.attendanceAPI !== 'undefined' && window.attendanceAPI.isOnlineMode) {
-                    console.log('📊 Google Sheets에서 학생 데이터 조회:', studentId);
+                // 하이브리드 모드: 통합 API 사용
+                if (typeof window.attendanceAPI !== 'undefined') {
+                    console.log('📊 통합 API로 학생 데이터 조회:', studentId);
                     
                     try {
-                        const result = await window.attendanceAPI.getStudentStats(studentId);
+                        // getAttendanceData에 학생 필터 적용
+                        const result = await window.attendanceAPI.getAttendanceData({
+                            studentId: studentId
+                        });
                         
                         if (result.success && result.data && result.data.length > 0) {
                             studentRecords = result.data;
-                            console.log('✅ Google Sheets 데이터 조회 성공:', studentRecords.length + '건');
+                            console.log('✅ 통합 데이터 조회 성공:', studentRecords.length + '건');
+                            console.log('📊 데이터 소스:', result.source, `(Google: ${result.googleCount || 0}, Local: ${result.localCount || 0})`);
                             
-                            // Google Sheets 데이터 표시 시 표시기 추가
-                            showDataSourceIndicator('google_sheets');
+                            // 데이터 소스 표시
+                            if (result.googleCount > 0) {
+                                showDataSourceIndicator('google_sheets');
+                            } else {
+                                showDataSourceIndicator('local_storage');
+                            }
                         } else {
-                            console.log('📱 Google Sheets에 데이터가 없음, 로컬 데이터 확인');
+                            console.log('📱 통합 API에 데이터가 없음');
                         }
-                    } catch (googleError) {
-                        console.warn('🔄 Google Sheets 조회 실패, 로컬 데이터로 대체:', googleError);
+                    } catch (apiError) {
+                        console.warn('🔄 통합 API 조회 실패, 로컬 데이터로 대체:', apiError);
                     }
                 }
 
-                // Google Sheets에 데이터가 없거나 오프라인인 경우 로컬 데이터 사용
+                // API 실패 시 직접 로컬 데이터 사용
                 if (studentRecords.length === 0) {
                     const attendanceData = JSON.parse(localStorage.getItem('attendanceData') || '[]');
                     studentRecords = attendanceData.filter(record => record.studentId === studentId);
                     
                     if (studentRecords.length > 0) {
-                        console.log('📱 로컬 데이터 사용:', studentRecords.length + '건');
+                        console.log('📱 직접 로컬 데이터 사용:', studentRecords.length + '건');
                         showDataSourceIndicator('local_storage');
                     }
                 }
@@ -531,10 +573,10 @@
             // 기존 개별 통계 카드들은 제거되었으므로 성취 배지 내 통계만 업데이트
         }
 
-        // 성취 배지 업데이트
+        // 학습 통계 업데이트
         function updateAchievements(stats) {
             // 통계 배너 업데이트
-            document.getElementById('stats-total-days').textContent = `${stats.totalDays}일`;
+            document.getElementById('stats-total-days').textContent = stats.totalDays;
             
             // 누적 학습시간 포맷팅 (시간과 분으로 표시)
             const totalMinutes = stats.totalStudyTime;
@@ -559,45 +601,6 @@
                 avgTimeText = `${avgRemaining}분`;
             }
             document.getElementById('stats-avg-time').textContent = avgTimeText;
-            
-            // 기존 성취 배지 로직
-            const badges = [];
-            
-            // 출석일 배지
-            if (stats.totalDays >= 30) badges.push({icon: 'fa-calendar-check', color: 'bg-blue-500', title: '30일 출석', desc: '꾸준함의 달인'});
-            else if (stats.totalDays >= 14) badges.push({icon: 'fa-calendar-plus', color: 'bg-blue-400', title: '2주 출석', desc: '좋은 시작'});
-            else if (stats.totalDays >= 7) badges.push({icon: 'fa-calendar', color: 'bg-blue-300', title: '1주 출석', desc: '첫걸음'});
-            
-            // 학습시간 배지
-            if (stats.totalStudyTime >= 1000) badges.push({icon: 'fa-clock', color: 'bg-green-500', title: '1000분 달성', desc: '시간의 마법사'});
-            else if (stats.totalStudyTime >= 500) badges.push({icon: 'fa-hourglass-half', color: 'bg-green-400', title: '500분 달성', desc: '열정의 증명'});
-            
-            // 출석률 배지
-            if (stats.attendanceRate >= 95) badges.push({icon: 'fa-star', color: 'bg-yellow-500', title: '완벽 출석', desc: '95% 이상'});
-            else if (stats.attendanceRate >= 80) badges.push({icon: 'fa-thumbs-up', color: 'bg-yellow-400', title: '우수 출석', desc: '80% 이상'});
-            
-            // 꾸준함 배지
-            if (stats.consecutiveDays >= 10) badges.push({icon: 'fa-fire', color: 'bg-red-500', title: '꾸준함 배지', desc: `${stats.consecutiveDays}일 달성`});
-            
-            const badgeContainer = document.getElementById('badge-container');
-            if (badges.length === 0) {
-                badgeContainer.innerHTML = `
-                    <div class="col-span-full text-center py-8 text-gray-500">
-                        <i class="fas fa-trophy text-gray-300 text-3xl mb-2"></i>
-                        <p>더 많은 출석으로 배지를 획득하세요!</p>
-                    </div>
-                `;
-            } else {
-                badgeContainer.innerHTML = badges.map(badge => `
-                    <div class="text-center p-4 bg-white rounded-lg achievement-badge">
-                        <div class="w-12 h-12 ${badge.color} rounded-full flex items-center justify-center mx-auto mb-2">
-                            <i class="fas ${badge.icon} text-white text-lg"></i>
-                        </div>
-                        <h4 class="font-semibold text-gray-900 text-sm">${badge.title}</h4>
-                        <p class="text-xs text-gray-700">${badge.desc}</p>
-                    </div>
-                `).join('');
-            }
         }
 
         // 차트 업데이트
