@@ -980,24 +980,19 @@
 
         // 🎯 JJ 선생님 구글 시트 데이터 변환 (정확한 구조 - 각 행이 개별 이벤트)
         function convertGoogleToLocalFormat(googleRecord) {
-            console.log('🔄 구글 시트 원본 레코드 변환:', googleRecord);
+            console.log('🔄 출결 기록 데이터 변환:', googleRecord);
             
-            // JJ 선생님 실제 구조: { timestamp, studentId, studentName, status }
-            // 각 행이 개별 입실/퇴실 이벤트
+            // "출결 기록" 시트에서 Google Apps Script가 이미 입실/퇴실로 분리해서 전송
+            // 구조: { timestamp, studentId, studentName, status, originalDate, originalTime }
             
-            const timestamp = googleRecord.timestamp;
+            console.log('📊 출결 기록 데이터:', googleRecord);
+            
+            const timestamp = googleRecord.timestamp; // 이미 완전한 DateTime
             const studentId = String(googleRecord.studentId || '').trim();
             const studentName = String(googleRecord.studentName || '').trim();
-            const status = String(googleRecord.status || '').trim();
+            const status = String(googleRecord.status || '').trim(); // 입실 또는 퇴실
             
-            console.log('📊 원본 googleRecord 전체:', googleRecord);
-            console.log('📊 필드별 추출 결과:', { 
-                timestamp: timestamp, 
-                studentId: studentId, 
-                studentName: studentName, 
-                status: status 
-            });
-            console.log('🔍 사용 가능한 모든 키:', Object.keys(googleRecord));
+            console.log('📊 필드 추출:', { timestamp, studentId, studentName, status });
             
             // 타임스탬프 파싱 - "2025. 9. 1 오전 6:19:47" 형식
             let eventDateTime;
