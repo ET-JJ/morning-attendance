@@ -93,20 +93,22 @@
                     <div class="text-xs text-black mt-1">5자리 숫자로 입력해주세요</div>
                 </div>
 
-                <!-- 이름 입력 -->
+                <!-- 이름 표시 (자동 입력) -->
                 <div>
                     <label for="studentName" class="block text-sm font-medium text-black mb-2">
                         <i class="fas fa-user mr-2 text-indigo-500"></i>이름
+                        <span id="name-status" class="ml-2 text-xs"></span>
                     </label>
                     <input 
                         type="text" 
                         id="studentName" 
                         name="studentName"
-                        placeholder="이름을 입력하세요" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg text-center"
+                        placeholder="학번 입력 시 자동으로 표시됩니다" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg text-center bg-gray-50"
                         required
-                        maxlength="10"
+                        readonly
                     >
+                    <div id="name-helper" class="text-xs text-gray-500 mt-1">학번을 정확히 입력하면 자동으로 이름이 표시됩니다</div>
                 </div>
 
                 <!-- 입실/퇴실 선택 -->
@@ -274,6 +276,51 @@
             submitBtnText.textContent = `${status} 기록하기`;
         }
 
+        // 학번 입력 시 자동 이름 조회
+        let lookupTimeout;
+        document.getElementById('studentId').addEventListener('input', async function(e) {
+            const studentId = e.target.value.trim();
+            const nameField = document.getElementById('studentName');
+            
+            // 입력값 초기화
+            nameField.value = '';
+            nameField.classList.remove('text-green-600', 'text-red-600');
+            
+            // 5자리 숫자가 아니면 조회하지 않음
+            if (!/^[0-9]{5}$/.test(studentId)) {
+                nameField.placeholder = '학번 입력 시 자동으로 표시됩니다';
+                return;
+            }
+            
+            // 로딩 상태 표시
+            nameField.placeholder = '이름 조회 중...';
+            
+            // 디바운싱: 이전 타이머 클리어
+            clearTimeout(lookupTimeout);
+            
+            // 300ms 후 조회 실행
+            lookupTimeout = setTimeout(async () => {
+                try {
+                    const result = await window.attendanceAPI.getStudentName(studentId);
+                    
+                    if (result.success) {
+                        nameField.value = result.data.studentName;
+                        nameField.classList.add('text-green-600');
+                        nameField.placeholder = '이름이 자동으로 입력되었습니다';
+                    } else {
+                        nameField.value = '';
+                        nameField.classList.add('text-red-600');
+                        nameField.placeholder = '해당 학번의 학생을 찾을 수 없습니다';
+                    }
+                } catch (error) {
+                    console.error('학생 이름 조회 오류:', error);
+                    nameField.value = '';
+                    nameField.classList.add('text-red-600');
+                    nameField.placeholder = '이름 조회 중 오류가 발생했습니다';
+                }
+            }, 300);
+        });
+
         // 폼 제출 처리
         document.getElementById('attendanceForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -300,8 +347,8 @@
                     throw new Error('학번은 5자리 숫자로 입력해주세요.');
                 }
                 
-                if (formData.studentName.length < 2) {
-                    throw new Error('이름을 정확히 입력해주세요.');
+                if (!formData.studentName || formData.studentName.length < 2) {
+                    throw new Error('학번에 해당하는 학생 이름이 확인되지 않았습니다. 올바른 학번을 입력해주세요.');
                 }
 
                 // 시간 체크
