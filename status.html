@@ -295,7 +295,7 @@
             
             try {
                 console.log('📡 직접 Google Apps Script 호출...');
-                const googleResponse = await fetch('https://script.google.com/macros/s/AKfycbxBZekl8Dx9LGDHCEz9_-U8Mm5R0Qo0aj3VJWOxgavIPE1KGF8KWJR17Wf9BdcrDKsT/exec?action=getAllAttendance');
+                const googleResponse = await fetch('https://script.google.com/macros/s/AKfycbway641X2eskkkpRAw36Yde059Vcto9Oqr6ezRx5969FzO912cZsOKlOrAvbUkfSXWZMA/exec?action=getAllAttendance');
                 
                 if (googleResponse.ok) {
                     const googleResult = await googleResponse.json();
